@@ -40,14 +40,14 @@ test('every snippet runs where it is offered, without an error', async () => {
               source: "aw.require('snippet');",
               request,
               response,
-              variables: { token: 'a.eyJzdWIiOiIxIn0.c' },
+              variables: { token: 'a.eyJzdWIiOiIxIn0.c' }, // gitleaks:allow
             }
           : {
               phase: place,
               source: snippet.code,
               request,
               ...(place === 'post' ? { response } : {}),
-              variables: { token: 'a.eyJzdWIiOiIxIn0.c', username: 'ada', password: 'pw' },
+              variables: { token: 'a.eyJzdWIiOiIxIn0.c', username: 'ada', password: 'pw' }, // gitleaks:allow
             };
       const output = await runScript({
         ...input,

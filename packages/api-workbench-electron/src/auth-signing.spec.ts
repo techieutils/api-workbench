@@ -88,10 +88,10 @@ test('OAuth 1.0a HMAC-SHA1 matches the Twitter "Creating a signature" example', 
   const header = oauth1Header(
     {
       type: 'oauth1',
-      consumerKey: 'xvz1evFS4wEEPTGEFPHBog',
-      consumerSecret: 'kAcSOqF21Fu85e7zjz7ZN2U4ZRhfV3WpwPAoE3Z7kBw',
-      token: '370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb',
-      tokenSecret: 'LswwdoUaIvS8ltyTt5jkRh4J50vUPVVHtR2YPi5kE',
+      consumerKey: 'xvz1evFS4wEEPTGEFPHBog', // gitleaks:allow
+      consumerSecret: 'kAcSOqF21Fu85e7zjz7ZN2U4ZRhfV3WpwPAoE3Z7kBw', // gitleaks:allow
+      token: '370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb', // gitleaks:allow
+      tokenSecret: 'LswwdoUaIvS8ltyTt5jkRh4J50vUPVVHtR2YPi5kE', // gitleaks:allow
       signatureMethod: 'HMAC-SHA1',
     },
     {
@@ -102,7 +102,7 @@ test('OAuth 1.0a HMAC-SHA1 matches the Twitter "Creating a signature" example', 
       timestamp: 1318622958,
     },
   );
-  assert.match(header, /^OAuth oauth_consumer_key="xvz1evFS4wEEPTGEFPHBog", /);
+  assert.match(header, /^OAuth oauth_consumer_key="xvz1evFS4wEEPTGEFPHBog", /); // gitleaks:allow
   assert.ok(
     header.includes(`oauth_signature="${rfc3986('hCtSmYh+iHYCEqBWrE7C7hYmtUk=')}"`),
     header,
@@ -433,7 +433,7 @@ test('Hawk matches the reference header example', () => {
     {
       type: 'hawk',
       id: 'dh37fgj492je',
-      key: 'werxhqb98rpaxn39848xrunpaw3489ruxnpa98w4rxn',
+      key: 'werxhqb98rpaxn39848xrunpaw3489ruxnpa98w4rxn', // gitleaks:allow
       algorithm: 'sha256',
       ext: 'some-app-ext-data',
     },

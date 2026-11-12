@@ -94,13 +94,13 @@ test('what the page posts becomes secret set’s fields; empty secrets keep what
       origin: 'https://ledger.example.com',
       values: {
         'options.jwtAlgorithm': 'RS256',
-        secret: '-----BEGIN PRIVATE KEY-----\nk',
+        secret: '-----BEGIN PRIVATE KEY-----\nk', // gitleaks:allow
         'options.jwtSecretBase64': true,
       },
     },
     rows,
   ) as { fields: Record<string, unknown> };
-  assert.equal(jwt.fields.secret, '-----BEGIN PRIVATE KEY-----\nk');
+  assert.equal(jwt.fields.secret, '-----BEGIN PRIVATE KEY-----\nk'); // gitleaks:allow
   // The Base64 box belongs to shared secrets only, so with RS256 it is not sent.
   assert.equal((jwt.fields.options as Record<string, unknown>).jwtSecretBase64, undefined);
   for (const [form, reason] of [

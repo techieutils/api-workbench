@@ -1,0 +1,12 @@
+# Findings in the first commit that are not secrets: public examples from the OAuth 1.0 and Hawk
+# specifications, a made-up JWT, and a placeholder private key in tests. Their lines now carry
+# `gitleaks:allow`; this file covers the commit that came before those comments.
+17c2c42f2666a3c6e043063275e6161e88c06896:packages/api-workbench-common/src/script-snippets.spec.ts:generic-api-key:43
+17c2c42f2666a3c6e043063275e6161e88c06896:packages/api-workbench-common/src/script-snippets.spec.ts:generic-api-key:50
+17c2c42f2666a3c6e043063275e6161e88c06896:packages/api-workbench-electron/src/auth-signing.spec.ts:generic-api-key:105
+17c2c42f2666a3c6e043063275e6161e88c06896:packages/api-workbench-electron/src/auth-signing.spec.ts:generic-api-key:436
+17c2c42f2666a3c6e043063275e6161e88c06896:packages/api-workbench-electron/src/auth-signing.spec.ts:generic-api-key:91
+17c2c42f2666a3c6e043063275e6161e88c06896:packages/api-workbench-electron/src/auth-signing.spec.ts:generic-api-key:92
+17c2c42f2666a3c6e043063275e6161e88c06896:packages/api-workbench-electron/src/auth-signing.spec.ts:generic-api-key:93
+17c2c42f2666a3c6e043063275e6161e88c06896:packages/api-workbench-electron/src/auth-signing.spec.ts:generic-api-key:94
+17c2c42f2666a3c6e043063275e6161e88c06896:packages/api-workbench-vscode/src/core/credentials.spec.ts:private-key:97
