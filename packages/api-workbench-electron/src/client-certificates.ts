@@ -1,4 +1,4 @@
-import { readFile, stat } from 'node:fs/promises';
+import { open } from 'node:fs/promises';
 import path from 'node:path';
 import { createHash, X509Certificate } from 'node:crypto';
 import { createSecureContext, type SecureContext } from 'node:tls';
@@ -19,10 +19,16 @@ const MAX_FILE_BYTES = 1024 * 1024;
 /** Certificate files are copied into the vault when saved; older workspace entries still read them per request. */
 export async function readCertificateFile(file: string, label: string): Promise<Buffer> {
   try {
-    const info = await stat(file);
-    if (!info.isFile()) throw new Error('not a file');
-    if (info.size > MAX_FILE_BYTES) throw new Error(`The ${label} file is larger than 1 MiB.`);
-    return await readFile(file);
+    // One handle for the checks and the read, so the file cannot be swapped between them.
+    const handle = await open(file, 'r');
+    try {
+      const info = await handle.stat();
+      if (!info.isFile()) throw new Error('not a file');
+      if (info.size > MAX_FILE_BYTES) throw new Error(`The ${label} file is larger than 1 MiB.`);
+      return await handle.readFile();
+    } finally {
+      await handle.close();
+    }
   } catch (error) {
     if (error instanceof Error && error.message.includes('1 MiB')) throw error;
     throw new Error(
@@ -87,8 +93,9 @@ export function loadCertificateMaterial(
     ? ((context.context as { getCertificate?: () => Buffer | null }).getCertificate?.() ??
       undefined)
     : material.cert;
+  // The passphrase is left out: the material it opens is already identified by its bytes.
   const hash = createHash('sha256');
-  for (const part of [material.cert, material.key, material.pfx, passphrase])
+  for (const part of [material.cert, material.key, material.pfx])
     hash.update(part ?? '').update('\0');
   return { ...material, passphrase, fingerprint: hash.digest('hex'), ...certificateDetails(leaf) };
 }

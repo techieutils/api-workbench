@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, useId } from 'vue';
 import { usePopoverMenu } from '../composables/popover-menu';
 import MdiIcon from './MdiIcon.vue';
 
@@ -31,7 +31,7 @@ defineProps<{
 const emit = defineEmits<{ select: [id: string] }>();
 const trigger = ref<HTMLButtonElement>();
 const menu = ref<HTMLElement>();
-const uid = `action-menu-${Math.random().toString(36).slice(2, 9)}`;
+const uid = `action-menu-${useId()}`;
 const popover = usePopoverMenu(trigger, menu, {
   place(element, rect) {
     const width = 240;

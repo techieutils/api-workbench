@@ -109,12 +109,20 @@ onBeforeUnmount(() => loadedFont && document.fonts.delete(loadedFont));
 
 /** The first 256 bytes as a hex dump with an ASCII column. */
 const hexDump = computed(() => (bytes.value ? formatHexDump(bytes.value.subarray(0, 256)) : ''));
-/** The HTML without scripts: the sandbox would block them anyway, and log each one. */
-const renderedHtml = computed(() =>
-  props.response.body
-    .replace(/<script\b[\s\S]*?<\/script\b[^>]*>/gi, '')
-    .replace(/<script\b[^>]*\/>/gi, ''),
-);
+/**
+ * The HTML without scripts: the sandbox would block them anyway, and log each one. Removing one can
+ * join the text around it into another script tag, so it repeats until none is left.
+ */
+const renderedHtml = computed(() => {
+  let html = props.response.body;
+  for (let previous = ''; html !== previous;) {
+    previous = html;
+    html = html
+      .replace(/<script\b[\s\S]*?<\/script\b[^>]*>/gi, '')
+      .replace(/<script\b[^>]*\/>/gi, '');
+  }
+  return html;
+});
 const renderedMarkdown = computed(() =>
   kind.value === 'markdown' ? renderMarkdown(props.response.body) : '',
 );

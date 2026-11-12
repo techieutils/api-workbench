@@ -114,13 +114,14 @@ test('a check reports what it finds, and a download and install follow the perso
   updater.emit('update-available', {
     version: '1.1.0',
     releaseDate: '2026-11-03',
-    releaseNotes: '<p>Faster <b>captures</b></p>',
+    // A nested tag leaves no stray bracket behind.
+    releaseNotes: '<p>Faster <b>captures</b> <<i>script></p>',
   });
   assert.deepEqual(updates.info().status, {
     state: 'available',
     version: '1.1.0',
     releaseDate: '2026-11-03',
-    notes: 'Faster captures',
+    notes: 'Faster captures script',
   });
   // Installing waits for a download.
   updates.install();

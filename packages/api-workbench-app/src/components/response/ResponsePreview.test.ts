@@ -8,6 +8,8 @@ describe('HTML preview', () => {
     workspaceWith([]);
     const body = [
       '<p>kept</p>',
+      // Removing the inner script joins the outer text into another one.
+      '<scr<script></script>ipt>three()</script>',
       '<script>one()</script>',
       '<script>two()</script\t\n foo>',
       '<SCRIPT src="x.js"/>',
@@ -27,7 +29,7 @@ describe('HTML preview', () => {
     const frame = wrapper.get('iframe');
     const html = frame.attributes('srcdoc') ?? '';
     expect(html).toContain('<p>kept</p>');
-    expect(html).not.toMatch(/one\(\)|two\(\)|<script/i);
+    expect(html).not.toMatch(/one\(\)|two\(\)|three\(\)|<script/i);
     expect(frame.attributes('sandbox') ?? '').not.toContain('allow-scripts');
     wrapper.unmount();
   });

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, useAttrs, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, useAttrs, useId, watch } from 'vue';
 import MdiIcon from '../MdiIcon.vue';
 
 /**
@@ -45,7 +45,7 @@ const props = withDefaults(
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>();
 const attrs = useAttrs();
 
-const uid = `ui-select-${Math.random().toString(36).slice(2, 10)}`;
+const uid = `ui-select-${useId()}`;
 const normalized = computed<SelectOption[]>(() =>
   props.options.map((option) =>
     typeof option === 'string'

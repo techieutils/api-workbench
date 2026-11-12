@@ -140,10 +140,16 @@ async function readFolder(folder: string): Promise<Source> {
 }
 /** A collection file in any format the app imports. */
 async function readFile(file: string): Promise<Source> {
-  const stat = await fs.stat(file);
-  if (stat.size > IMPORT_LIMIT)
-    throw new UsageError('Collection files must be smaller than 10 MB.');
-  const data = await fs.readFile(file);
+  // One handle for the size check and the read, so the file cannot be swapped between them.
+  const handle = await fs.open(file, 'r');
+  let data: Buffer;
+  try {
+    if ((await handle.stat()).size > IMPORT_LIMIT)
+      throw new UsageError('Collection files must be smaller than 10 MB.');
+    data = await handle.readFile();
+  } finally {
+    await handle.close();
+  }
   const result = importFiles([{ name: path.basename(file), data }]);
   const fileUploads = /\.(http|rest)$/i.test(file)
     ? uploadsOfHttpFile(data.toString('utf8'), path.dirname(path.resolve(file)))

@@ -1662,7 +1662,7 @@ function caretPoint(area: HTMLTextAreaElement): { left: number; top: number } {
 }
 
 /** Whether a request's raw body was chosen to show as Raw or as GraphQL, by request. */
-const bodyModes: Record<string, 'raw' | 'graphql'> = {};
+const bodyModes = new Map<string, 'raw' | 'graphql'>();
 
 /**
  * Makes a draft's body a GraphQL one: kept text becomes the query (a body that is JSON already
@@ -2091,16 +2091,18 @@ function renderRequest(view: RequestView): Node {
           const raw = draft.bodyType === 'none' && draft.body ? 'raw' : draft.bodyType;
           // A raw body that is a GraphQL query shows as one, unless Raw was chosen for it.
           const shown =
-            raw === 'raw' && bodyModes[key] !== 'raw' && graphqlParts(draft.body) ? 'graphql' : raw;
+            raw === 'raw' && bodyModes.get(key) !== 'raw' && graphqlParts(draft.body)
+              ? 'graphql'
+              : raw;
           wrap.append(
             field(
               'Body type',
               choice('Body type', kinds, shown, !editable, (value) => {
                 if (value === 'graphql') {
-                  bodyModes[key] = 'graphql';
+                  bodyModes.set(key, 'graphql');
                   toGraphql(draft);
                 } else {
-                  if (value === 'raw') bodyModes[key] = 'raw';
+                  if (value === 'raw') bodyModes.set(key, 'raw');
                   draft.bodyType = value;
                 }
                 updateDirty();
@@ -5605,6 +5607,8 @@ document.addEventListener('keydown', (event) => {
 });
 
 window.addEventListener('message', (event: MessageEvent<{ type?: string; view?: View }>) => {
+  // VS Code's webview host posts to this frame with its own origin; anything else is not the extension.
+  if (event.origin !== window.origin) return;
   if (event.data?.type !== 'render' || !event.data.view) return;
   current = event.data.view;
   saved.view = current;

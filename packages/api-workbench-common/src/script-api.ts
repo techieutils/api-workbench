@@ -338,7 +338,7 @@ function chainBefore(text: string, end: number): Segment[] | undefined {
 /** The expression a `const`, `let`, or `var` gave a name, the last time before `end`. */
 function assignment(text: string, name: string, end: number): Segment[] | undefined {
   const pattern = new RegExp(
-    `\\b(?:const|let|var)\\s+${name.replace(/\$/g, '\\$')}\\s*=\\s*([^;\\n]+)`,
+    `\\b(?:const|let|var)\\s+${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*=\\s*([^;\\n]+)`,
     'g',
   );
   let found: RegExpExecArray | null;

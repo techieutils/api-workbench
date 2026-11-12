@@ -48,16 +48,20 @@ export function updateErrorMessage(error: unknown): string {
   return text.length > 200 ? `${text.slice(0, 200)}…` : text || 'The update failed.';
 }
 
+/** Text without markup; stray angle brackets left by nested tags such as `<<b>i>` go too. */
+const stripTags = (html: string) =>
+  html
+    .replace(/<[^>]+>/g, '')
+    .replace(/[<>]/g, '')
+    .trim();
 /** Release notes as plain text: electron-updater gives a string, or a list per version. */
 function notesText(notes: unknown): string | undefined {
-  if (typeof notes === 'string') return notes.replace(/<[^>]+>/g, '').trim() || undefined;
+  if (typeof notes === 'string') return stripTags(notes) || undefined;
   if (Array.isArray(notes))
     return (
-      notes
-        .map((item) => (typeof item?.note === 'string' ? item.note : ''))
-        .join('\n\n')
-        .replace(/<[^>]+>/g, '')
-        .trim() || undefined
+      stripTags(
+        notes.map((item) => (typeof item?.note === 'string' ? item.note : '')).join('\n\n'),
+      ) || undefined
     );
   return undefined;
 }

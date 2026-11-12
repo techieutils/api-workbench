@@ -1,0 +1,14 @@
+# What CodeQL analyses. Tests, UI smoke suites, screenshot scripts, and examples never ship: they
+# start local servers, trust their own certificates, and inject scripts into the app on purpose,
+# which code scanning reports as problems in the product. Shipped code is everything else.
+name: API Workbench
+paths-ignore:
+  - '**/*.spec.ts'
+  - '**/*.test.ts'
+  - e2e
+  - tests
+  - examples
+  - scripts/ui-smoke
+  - scripts/protocol-ui-smoke
+  - scripts/docs-screenshots.ts
+  - packages/api-workbench-vscode/src/test
