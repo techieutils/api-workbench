@@ -1,0 +1,17 @@
+# Text files are stored and checked out with LF on every system, so Prettier's check and the
+# release builds see the same files on Windows as on macOS and Linux.
+* text=auto eol=lf
+
+# Binary files are never converted.
+*.png binary
+*.jpg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.icns binary
+*.woff binary
+*.woff2 binary
+*.zip binary
+*.p12 binary
+*.pfx binary
+*.der binary
