@@ -20,8 +20,8 @@ jobs:
       # The checks and unit tests do not start Electron.
       ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -37,7 +37,7 @@ jobs:
       # npm test). A failing input is saved, with the seed that made it, to replay.
       - name: Fuzz the parsers
         run: npm run test:fuzz
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: fuzz-findings
@@ -46,7 +46,7 @@ jobs:
       # The VS Code extension, packaged as it is released, so a broken manifest fails here.
       - name: Package the VS Code extension
         run: npm run vscode:package
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: vscode-extension
           path: packages/api-workbench-vscode/dist/*.vsix
@@ -57,8 +57,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -70,7 +70,7 @@ jobs:
       - run: xvfb-run --auto-servernum npm run test:e2e
       - name: Keep traces and screenshots of failures
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-results
           path: |
@@ -83,7 +83,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # The whole history, so a secret committed and later removed is still found.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       # The gitleaks tool itself (MIT, no license key), pinned and checked against its release checksum.
