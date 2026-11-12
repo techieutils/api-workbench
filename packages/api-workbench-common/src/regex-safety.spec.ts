@@ -37,6 +37,16 @@ test('patterns that can take exponential time are refused, with why', () => {
     assert.match(regexRisk(pattern) ?? '', /alternatives can start the same way/, pattern);
   for (const pattern of ['((?=a)a)+$', '((?!b)a)*$', '(x(?<=x)a)+'])
     assert.match(regexRisk(pattern) ?? '', /lookaround/, pattern);
+  // Found by fuzzing: thirty of these in a row ran for minutes against thirty-one characters.
+  for (const pattern of [
+    `^${'[a-\u0220z]+'.repeat(30)}`,
+    '^[a-z]+[a-z]+[a-z]+[a-z]+$',
+    '\\w+\\w*\\w+\\w+',
+    '.*.*.*.*x',
+    '(?:\\w+)(?:\\w+)\\w+\\w+',
+    '(\\w+){4}!',
+  ])
+    assert.match(regexRisk(pattern) ?? '', /open-ended repeats in a row/, pattern);
 });
 
 test('everyday patterns are allowed', () => {
@@ -48,6 +58,10 @@ test('everyday patterns are allowed', () => {
     '^[A-Z]{3}$',
     '^(\\d{1,3}\\.){3}\\d{1,3}$',
     '^(?=.*\\d)(?=.*[a-z]).{8,}$',
+    '^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\\W).{8,}$',
+    '^\\w+ \\w+ \\w+ \\w+$',
+    '^[\\w.]+@\\w+\\.\\w+\\.\\w+$',
+    'a+b?c+',
     '(?<=\\$)\\d+',
     '^[\\d,]+$',
     '^v\\d+(\\.\\d+)?$',
