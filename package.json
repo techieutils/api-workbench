@@ -52,7 +52,7 @@
     "test": "npm run compile && node --test dist/tests/*.test.js && npm run test --workspaces --if-present",
     "test:vue": "npm run test:vue -w @techieutils/api-workbench-app",
     "test:fuzz": "node scripts/fuzz/fuzz.mjs",
-    "test:e2e": "npm run compile && playwright test",
+    "test:e2e": "npm run compile && npm run bundle -w @techieutils/api-workbench-cli && playwright test",
     "test:ui": "npm run compile && electron dist/scripts/ui-smoke.js",
     "compile:prod": "npm run build -w @techieutils/api-workbench-common && npm run build -w @techieutils/api-workbench-electron && npm run build:node -w @techieutils/api-workbench-app && node node_modules/typescript-build/bin/tsc -p tsconfig.json && node dist/scripts/copy-assets.js --minify && npm run shell:prod && npm run styles:prod",
     "lint": "eslint . --max-warnings=0",

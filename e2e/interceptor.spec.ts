@@ -139,7 +139,8 @@ test.describe('Interceptor', () => {
     await expect(rows(window).first()).toContainText('/down');
     await window.locator('[data-interceptor-filter=All]').click();
 
-    await window.locator('[data-interceptor-search]').fill('404');
+    // The URLs hold random ports, so a bare status such as 404 could match one of them too.
+    await window.locator('[data-interceptor-search]').fill('/missing 404');
     await expect(rows(window)).toHaveCount(1);
     await expect(rows(window).first()).toContainText('/missing');
     await window.locator('[data-interceptor-search]').fill('nothing-like-this');
