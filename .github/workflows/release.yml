@@ -23,7 +23,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { name: macOS, os: macos-latest, args: --mac }
+          # The .pkg installers are built afterwards, one architecture at a time (see below).
+          - { name: macOS, os: macos-latest, args: --mac dmg zip --x64 --arm64 }
           - { name: Windows, os: windows-latest, args: --win }
           - { name: Linux, os: ubuntu-latest, args: --linux }
     steps:
@@ -56,6 +57,14 @@ jobs:
             if [ -z "${!name}" ]; then unset "$name"; fi
           done
           npx electron-builder ${{ matrix.args }} --publish always
+          # Both architectures' .pkg builds use one temporary file in release/, named after the app
+          # id, so building them together let one delete or replace the other's. The zip run above
+          # writes latest-mac.yml; these runs only add the installers.
+          if [ "$RUNNER_OS" = macOS ]; then
+            for arch in x64 arm64; do
+              npx electron-builder --mac pkg --$arch --publish always
+            done
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # macOS updates install only into a signed app. Add these secrets to sign and notarize.
