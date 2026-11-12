@@ -8,7 +8,10 @@
  * The check reads the pattern's structure without running it. It refuses:
  * - a repeated group that contains another repeat, such as `(a+)+`, `(\w+\.?)*`, `(a{1,9})+`;
  * - back-references, `\1` or `\k<name>`, which no engine can match in linear time;
- * - a repeated group that contains a lookaround, such as `((?=a)a+)+`.
+ * - a repeated group that contains a lookaround, such as `((?=a)a+)+`;
+ * - four or more open-ended repeats in a row with nothing fixed between them, such as
+ *   `\w+\w+\w+\w+`: they can split the same text so many ways that the time grows with a high
+ *   power of its length.
  * A few safe patterns of the first shape are refused too, such as `^(\d+,)*\d+$`; they can be
  * written another way (`^\d+(,\d+)*$` is refused as well, `^[\d,]+$` is not).
  */
@@ -18,6 +21,10 @@ const REPEAT_HELP =
 
 /** Outer repeats up to this many times are bounded: `(\d{1,3}\.){3}` takes at most a few steps. */
 const BOUNDED_REPEAT = 10;
+/** This many open-ended repeats in a row, such as `a+a+a+a+`, are refused. */
+const REPEATS_IN_A_ROW = 4;
+const IN_A_ROW_HELP =
+  'several open-ended repeats in a row, such as \\w+\\w+\\w+\\w+, can take minutes to match. Repeat once instead, such as \\w+';
 
 /** Why a pattern could take exponential time to match, or undefined when it cannot. */
 export function regexRisk(pattern: string): string | undefined {
@@ -36,6 +43,10 @@ export function regexRisk(pattern: string): string | undefined {
     alternatives: boolean;
     /** Where the group's contents start in the pattern. */
     from: number;
+    /** Open-ended repeats in a row so far, since the last thing that matches a fixed length. */
+    run: number;
+    /** Something fixed, or a `|`, broke the run inside the group. */
+    broken: boolean;
   }
   interface Quantifier {
     next: number;
@@ -43,6 +54,8 @@ export function regexRisk(pattern: string): string | undefined {
     varies: boolean;
     /** It repeats without a small bound, so what it holds can be tried very many ways. */
     unbounded: boolean;
+    /** How many times it repeats at least: 1 for no quantifier. */
+    times: number;
   }
   const frame = (lookaround: boolean, from: number): Frame => ({
     varies: false,
@@ -51,6 +64,8 @@ export function regexRisk(pattern: string): string | undefined {
     atStart: true,
     alternatives: false,
     from,
+    run: 0,
+    broken: false,
   });
   const stack: Frame[] = [frame(false, 0)];
   /**
@@ -83,13 +98,13 @@ export function regexRisk(pattern: string): string | undefined {
     else if (char === '?') [min, max, length] = [0, 1, 1];
     else {
       const counts = char === '{' ? /^\{(\d+)(,(\d*))?\}/.exec(pattern.slice(at, at + 24)) : null;
-      if (!counts) return { next: at, varies: false, unbounded: false };
+      if (!counts) return { next: at, varies: false, unbounded: false, times: 1 };
       min = Number(counts[1]);
       max = counts[2] === undefined ? min : counts[3] ? Number(counts[3]) : Infinity;
       length = counts[0].length;
     }
     const next = at + length + (pattern[at + length] === '?' ? 1 : 0);
-    return { next, varies: max > min, unbounded: max > BOUNDED_REPEAT };
+    return { next, varies: max > min, unbounded: max > BOUNDED_REPEAT, times: min };
   };
 
   let index = 0;
@@ -117,6 +132,8 @@ export function regexRisk(pattern: string): string | undefined {
       if (top().atStart) top().starts.push('*');
       top().alternatives = true;
       top().atStart = true;
+      top().run = 0;
+      top().broken = true;
       index++;
       continue;
     } else if (char === '(') {
@@ -125,7 +142,7 @@ export function regexRisk(pattern: string): string | undefined {
       // Past `(?:`, `(?<name>`, `(?=`, and the rest, so their `?` is not read as a quantifier.
       const opener = /^\((?:\?(?:[:=!]|<[=!]|<[^>]*>|[a-z-]+:))?/i.exec(pattern.slice(index))![0];
       stack.push(frame(lookaround, index + opener.length));
-      index += pattern[index + 1] === '?' ? 2 : 1;
+      index += opener.length;
       continue;
     } else if (char === ')') {
       const group = stack.length > 1 ? stack.pop()! : top();
@@ -141,6 +158,15 @@ export function regexRisk(pattern: string): string | undefined {
       const parent = top();
       parent.varies ||= group.varies || outer.varies;
       parent.lookaround ||= group.lookaround;
+      // A lookaround matches no text, so it neither adds to a run nor breaks one.
+      if (!group.lookaround) {
+        if (outer.unbounded) parent.run++;
+        else {
+          if (group.broken) parent.run = 0;
+          parent.run += group.run * Math.max(outer.times, 1);
+        }
+        if (parent.run >= REPEATS_IN_A_ROW) return IN_A_ROW_HELP;
+      }
       index = Math.max(outer.next, index + 1);
       continue;
     } else atomEnd = index + 1;
@@ -154,6 +180,12 @@ export function regexRisk(pattern: string): string | undefined {
     );
     const after = quantifier(atomEnd);
     if (after.varies) top().varies = true;
+    if (after.unbounded) {
+      if (++top().run >= REPEATS_IN_A_ROW) return IN_A_ROW_HELP;
+    } else if (!after.varies) {
+      top().run = 0;
+      top().broken = true;
+    }
     index = Math.max(after.next, atomEnd);
   }
   return undefined;

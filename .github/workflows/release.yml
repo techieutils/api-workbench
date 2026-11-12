@@ -48,7 +48,14 @@ jobs:
       - run: npm run format:check
       - run: npm run compile:prod
       - name: Build and upload to the draft release
-        run: npx electron-builder ${{ matrix.args }} --publish always
+        shell: bash
+        # A secret that is not set arrives as an empty string, which electron-builder reads as a
+        # certificate path (the working directory) and stops; unset those so the build is unsigned.
+        run: |
+          for name in CSC_LINK CSC_KEY_PASSWORD WIN_CSC_LINK WIN_CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID; do
+            if [ -z "${!name}" ]; then unset "$name"; fi
+          done
+          npx electron-builder ${{ matrix.args }} --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # macOS updates install only into a signed app. Add these secrets to sign and notarize.
