@@ -1,0 +1,36 @@
+{
+  "name": "@techieutils/api-workbench-common",
+  "version": "1.0.0",
+  "description": "Types and logic shared by the API Workbench main process and renderer.",
+  "license": "MIT",
+  "private": true,
+  "exports": {
+    "./package.json": "./package.json",
+    "./*": {
+      "types": "./src/*.ts",
+      "source": "./src/*.ts",
+      "default": "./dist/*.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "node ../../node_modules/typescript-build/bin/tsc -p tsconfig.json",
+    "typecheck": "node ../../node_modules/typescript-build/bin/tsc -p tsconfig.spec.json --noEmit",
+    "test": "node ../../node_modules/typescript-build/bin/tsc -p tsconfig.spec.json && node --test \"dist-spec/**/*.spec.js\"",
+    "lint": "eslint src --max-warnings=0",
+    "format": "prettier --write \"src/**/*.ts\" \"*.json\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"*.json\"",
+    "clean": "node -e \"for (const d of ['dist', 'dist-spec']) require('fs').rmSync(d, { recursive: true, force: true })\""
+  },
+  "dependencies": {
+    "@jitl/quickjs-singlefile-cjs-release-sync": "^0.32.0",
+    "@usebruno/lang": "^0.41.0",
+    "acorn": "^8.19.0",
+    "fast-xml-parser": "^5.12.0",
+    "fflate": "^0.8.3",
+    "quickjs-emscripten-core": "^0.32.0",
+    "yaml": "^2.9.1"
+  }
+}

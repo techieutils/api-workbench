@@ -1,0 +1,13 @@
+syntax = "proto3";
+package playground;
+
+service EchoService {
+  rpc Echo (EchoRequest) returns (EchoReply);
+  rpc Count (CountRequest) returns (stream CountReply);
+  rpc Collect (stream EchoRequest) returns (EchoReply);
+  rpc Chat (stream EchoRequest) returns (stream EchoReply);
+}
+message EchoRequest { string message = 1; }
+message EchoReply { string message = 1; string protocol = 2; }
+message CountRequest { int32 count = 1; }
+message CountReply { int32 value = 1; }

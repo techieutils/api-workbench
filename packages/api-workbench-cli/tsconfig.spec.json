@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist-spec"
+  },
+  "include": ["src/**/*.ts", "../api-workbench-common/src/collection-formats/bruno-lang.d.ts"],
+  "exclude": []
+}

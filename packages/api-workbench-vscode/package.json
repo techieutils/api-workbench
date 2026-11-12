@@ -1,0 +1,1507 @@
+{
+  "name": "api-workbench-vscode",
+  "displayName": "API Workbench",
+  "description": "Send API Workbench requests, run their tests, edit .http files, check OpenAPI specs, and serve mock servers from VS Code.",
+  "version": "1.0.0",
+  "publisher": "techieutils",
+  "license": "MIT",
+  "private": true,
+  "icon": "media/icon.png",
+  "homepage": "https://github.com/techieutils/api-workbench/blob/main/docs/vscode.md",
+  "bugs": {
+    "url": "https://github.com/techieutils/api-workbench/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/techieutils/api-workbench.git",
+    "directory": "packages/api-workbench-vscode"
+  },
+  "categories": [
+    "Testing",
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "api",
+    "rest",
+    "http",
+    "api testing",
+    "openapi",
+    "mock server",
+    "postman",
+    "graphql"
+  ],
+  "engines": {
+    "vscode": "^1.145.0"
+  },
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "workspaceContains:**/workspace.json",
+    "onLanguage:http",
+    "onLanguageModelTool:apiWorkbench_listRequests",
+    "onLanguageModelTool:apiWorkbench_sendRequest",
+    "onLanguageModelTool:apiWorkbench_runTests",
+    "onLanguageModelTool:apiWorkbench_checkSpec",
+    "onFileSystem:apiworkbench-script"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "API Workbench sends the requests and runs the tests of the workspace's API Workbench folders, which can come from anyone. It runs only once you trust the workspace."
+    },
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "API Workbench reads the workspace's folders from disk and runs its command line on them."
+    }
+  },
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "apiWorkbench",
+          "title": "API Workbench",
+          "icon": "media/activity.svg"
+        }
+      ],
+      "panel": [
+        {
+          "id": "apiWorkbenchPanel",
+          "title": "API Workbench",
+          "icon": "media/activity.svg"
+        }
+      ]
+    },
+    "views": {
+      "apiWorkbench": [
+        {
+          "id": "apiWorkbench.explorer",
+          "name": "Collections",
+          "icon": "media/activity.svg",
+          "contextualTitle": "API Workbench"
+        },
+        {
+          "id": "apiWorkbench.environments",
+          "name": "Environments",
+          "contextualTitle": "API Workbench"
+        },
+        {
+          "id": "apiWorkbench.specs",
+          "name": "API Specs",
+          "contextualTitle": "API Workbench"
+        },
+        {
+          "id": "apiWorkbench.mocks",
+          "name": "Mock Servers",
+          "contextualTitle": "API Workbench"
+        },
+        {
+          "id": "apiWorkbench.history",
+          "name": "History",
+          "contextualTitle": "API Workbench",
+          "visibility": "collapsed"
+        },
+        {
+          "id": "apiWorkbench.credentials",
+          "name": "Credentials",
+          "contextualTitle": "API Workbench",
+          "visibility": "collapsed"
+        },
+        {
+          "id": "apiWorkbench.cookies",
+          "name": "Cookies",
+          "contextualTitle": "API Workbench",
+          "visibility": "collapsed"
+        },
+        {
+          "id": "apiWorkbench.help",
+          "name": "Help and Feedback",
+          "visibility": "collapsed",
+          "icon": "$(question)"
+        }
+      ],
+      "apiWorkbenchPanel": [
+        {
+          "type": "webview",
+          "id": "apiWorkbench.network",
+          "name": "Network",
+          "contextualTitle": "API Workbench"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "apiWorkbench.explorer",
+        "contents": "No API Workbench workspaces found.\nOpen a folder with a team workspace folder, or open the API Workbench app once so its workspaces are listed here.\n[Refresh](command:apiWorkbench.refresh)\n[Read the guide](https://techieutils.github.io/api-workbench/docs/vscode.html)"
+      }
+    ],
+    "commands": [
+      {
+        "command": "apiWorkbench.refresh",
+        "title": "Refresh",
+        "category": "API Workbench",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "apiWorkbench.openRequest",
+        "title": "Open in Request Editor",
+        "category": "API Workbench",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "apiWorkbench.sendRequest",
+        "title": "Send Request",
+        "category": "API Workbench",
+        "icon": "$(send)"
+      },
+      {
+        "command": "apiWorkbench.run",
+        "title": "Run Tests",
+        "category": "API Workbench",
+        "icon": "$(play)"
+      },
+      {
+        "command": "apiWorkbench.selectEnvironment",
+        "title": "Switch Environment…",
+        "category": "API Workbench",
+        "icon": "$(layers)"
+      },
+      {
+        "command": "apiWorkbench.useEnvironment",
+        "title": "Use Environment",
+        "category": "API Workbench",
+        "icon": "$(check)"
+      },
+      {
+        "command": "apiWorkbench.filterTags",
+        "title": "Run Only Tagged Requests…",
+        "category": "API Workbench",
+        "icon": "$(tag)"
+      },
+      {
+        "command": "apiWorkbench.openRequestFile",
+        "title": "Open Request File",
+        "category": "API Workbench",
+        "icon": "$(file-code)"
+      },
+      {
+        "command": "apiWorkbench.copyAsCurl",
+        "title": "Copy as cURL",
+        "category": "API Workbench"
+      },
+      {
+        "command": "apiWorkbench.generateCode",
+        "title": "Generate Code Snippet…",
+        "category": "API Workbench",
+        "icon": "$(code)"
+      },
+      {
+        "command": "apiWorkbench.saveToCollection",
+        "title": "Save to Collection…",
+        "category": "API Workbench",
+        "icon": "$(save)"
+      },
+      {
+        "command": "apiWorkbench.importCollection",
+        "title": "Import Collection…",
+        "category": "API Workbench",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "apiWorkbench.generateFromSpec",
+        "title": "Generate Collection from Spec…",
+        "category": "API Workbench",
+        "icon": "$(symbol-interface)"
+      },
+      {
+        "command": "apiWorkbench.lintSpec",
+        "title": "Check Specification",
+        "category": "API Workbench",
+        "icon": "$(checklist)"
+      },
+      {
+        "command": "apiWorkbench.importSpec",
+        "title": "Add Specification to Workspace…",
+        "category": "API Workbench",
+        "icon": "$(add)"
+      },
+      {
+        "command": "apiWorkbench.openMock",
+        "title": "Open Mock Server",
+        "category": "API Workbench",
+        "icon": "$(server)"
+      },
+      {
+        "command": "apiWorkbench.startMock",
+        "title": "Start Mock Server…",
+        "category": "API Workbench",
+        "icon": "$(debug-start)"
+      },
+      {
+        "command": "apiWorkbench.stopMock",
+        "title": "Stop Mock Server",
+        "category": "API Workbench",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "apiWorkbench.unlockVault",
+        "title": "Unlock Credential Vault…",
+        "category": "API Workbench",
+        "icon": "$(unlock)"
+      },
+      {
+        "command": "apiWorkbench.lockVault",
+        "title": "Lock Credential Vault",
+        "category": "API Workbench",
+        "icon": "$(lock)"
+      },
+      {
+        "command": "apiWorkbench.refreshHistory",
+        "title": "Refresh History",
+        "category": "API Workbench",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "apiWorkbench.clearNetwork",
+        "title": "Clear Network Log",
+        "category": "API Workbench",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "apiWorkbench.openApp",
+        "title": "Open API Workbench App",
+        "category": "API Workbench",
+        "icon": "$(link-external)"
+      },
+      {
+        "command": "apiWorkbench.showOutput",
+        "title": "Show Output",
+        "category": "API Workbench"
+      },
+      {
+        "command": "apiWorkbench.openRunner",
+        "title": "Run Collection in Runner…",
+        "category": "API Workbench",
+        "icon": "$(run-all)"
+      },
+      {
+        "command": "apiWorkbench.previewDocs",
+        "title": "Preview API Docs",
+        "category": "API Workbench",
+        "icon": "$(book)"
+      },
+      {
+        "command": "apiWorkbench.mockFromSpec",
+        "title": "Start Mock Server from Spec…",
+        "category": "API Workbench",
+        "icon": "$(server-process)"
+      },
+      {
+        "command": "apiWorkbench.openHttpRequest",
+        "title": "Open in Workbench",
+        "category": "API Workbench",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "apiWorkbench.newRequest",
+        "title": "New Request…",
+        "category": "API Workbench",
+        "icon": "$(add)"
+      },
+      {
+        "command": "apiWorkbench.deleteRequest",
+        "title": "Delete Request",
+        "category": "API Workbench",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "apiWorkbench.newCollection",
+        "title": "New Collection…",
+        "category": "API Workbench",
+        "icon": "$(new-folder)"
+      },
+      {
+        "command": "apiWorkbench.renameCollection",
+        "title": "Rename…",
+        "category": "API Workbench",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "apiWorkbench.deleteCollection",
+        "title": "Delete",
+        "category": "API Workbench",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "apiWorkbench.exportCollection",
+        "title": "Export…",
+        "category": "API Workbench",
+        "icon": "$(export)"
+      },
+      {
+        "command": "apiWorkbench.newEnvironment",
+        "title": "New Environment…",
+        "category": "API Workbench",
+        "icon": "$(add)"
+      },
+      {
+        "command": "apiWorkbench.renameEnvironment",
+        "title": "Rename Environment…",
+        "category": "API Workbench",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "apiWorkbench.deleteEnvironment",
+        "title": "Delete Environment",
+        "category": "API Workbench",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "apiWorkbench.setVariable",
+        "title": "Edit Variable…",
+        "category": "API Workbench",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "apiWorkbench.unsetVariable",
+        "title": "Remove Variable",
+        "category": "API Workbench",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "apiWorkbench.deleteCookie",
+        "title": "Delete Cookie",
+        "category": "API Workbench",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "apiWorkbench.clearCookies",
+        "title": "Clear Cookies",
+        "category": "API Workbench",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "apiWorkbench.refreshCookies",
+        "title": "Refresh Cookies",
+        "category": "API Workbench",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "apiWorkbench.clearHistory",
+        "title": "Clear History",
+        "category": "API Workbench",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "apiWorkbench.resendHistory",
+        "title": "Send Again",
+        "category": "API Workbench",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "apiWorkbench.newRequestFromCurl",
+        "title": "New Request from cURL…",
+        "category": "API Workbench",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "apiWorkbench.teamStatus",
+        "title": "Team: Show Changes",
+        "category": "API Workbench",
+        "icon": "$(git-compare)"
+      },
+      {
+        "command": "apiWorkbench.teamCommit",
+        "title": "Team: Commit…",
+        "category": "API Workbench",
+        "icon": "$(git-commit)"
+      },
+      {
+        "command": "apiWorkbench.teamPull",
+        "title": "Team: Pull",
+        "category": "API Workbench",
+        "icon": "$(repo-pull)"
+      },
+      {
+        "command": "apiWorkbench.teamPush",
+        "title": "Team: Push",
+        "category": "API Workbench",
+        "icon": "$(repo-push)"
+      },
+      {
+        "command": "apiWorkbench.teamSync",
+        "title": "Team: Sync…",
+        "category": "API Workbench",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "apiWorkbench.newWorkspace",
+        "title": "New Workspace…",
+        "category": "API Workbench",
+        "icon": "$(add)"
+      },
+      {
+        "command": "apiWorkbench.renameWorkspace",
+        "title": "Rename Workspace…",
+        "category": "API Workbench",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "apiWorkbench.deleteWorkspace",
+        "title": "Delete Workspace",
+        "category": "API Workbench",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "apiWorkbench.addCredential",
+        "title": "Add Credential…",
+        "category": "API Workbench",
+        "icon": "$(add)"
+      },
+      {
+        "command": "apiWorkbench.deleteCredential",
+        "title": "Delete Credential",
+        "category": "API Workbench",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "apiWorkbench.collectionDocs",
+        "title": "Generate API Docs",
+        "category": "API Workbench",
+        "icon": "$(book)"
+      },
+      {
+        "command": "apiWorkbench.specFromCollection",
+        "title": "Create Spec from Collection…",
+        "category": "API Workbench",
+        "icon": "$(symbol-interface)"
+      },
+      {
+        "command": "apiWorkbench.mockFromCollection",
+        "title": "Start Mock Server from Collection",
+        "category": "API Workbench",
+        "icon": "$(server-process)"
+      },
+      {
+        "command": "apiWorkbench.forgetVaultPassword",
+        "title": "Forget Saved Vault Password",
+        "category": "API Workbench",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "apiWorkbench.reportIssue",
+        "title": "Report a Problem…",
+        "category": "API Workbench",
+        "icon": "$(bug)"
+      },
+      {
+        "command": "apiWorkbench.requestFeature",
+        "title": "Request a Feature…",
+        "category": "API Workbench",
+        "icon": "$(lightbulb)"
+      },
+      {
+        "command": "apiWorkbench.searchIssues",
+        "title": "Search Known Issues…",
+        "category": "API Workbench",
+        "icon": "$(search)"
+      },
+      {
+        "command": "apiWorkbench.reportVulnerability",
+        "title": "Report a Security Vulnerability…",
+        "category": "API Workbench",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "apiWorkbench.forgetAllowedHosts",
+        "title": "Forget Approved Hosts",
+        "category": "API Workbench"
+      },
+      {
+        "command": "apiWorkbench.openDocs",
+        "title": "Open Documentation",
+        "category": "API Workbench",
+        "icon": "$(book)"
+      },
+      {
+        "command": "apiWorkbench.openTroubleshooting",
+        "title": "Troubleshooting and FAQ",
+        "category": "API Workbench",
+        "icon": "$(question)"
+      },
+      {
+        "command": "apiWorkbench.openChangelog",
+        "title": "What's New",
+        "category": "API Workbench",
+        "icon": "$(history)"
+      },
+      {
+        "command": "apiWorkbench.openRepository",
+        "title": "View on GitHub",
+        "category": "API Workbench",
+        "icon": "$(github)"
+      },
+      {
+        "command": "apiWorkbench.copyDiagnostics",
+        "title": "Copy Diagnostic Information",
+        "category": "API Workbench",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "apiWorkbench.openCredentials",
+        "title": "Open Credentials",
+        "category": "API Workbench",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "apiWorkbench.openCertificates",
+        "title": "Open Certificates",
+        "category": "API Workbench",
+        "icon": "$(workspace-trusted)"
+      },
+      {
+        "command": "apiWorkbench.chooseHttpEnvironment",
+        "title": "Choose .http Environment…",
+        "category": "API Workbench",
+        "icon": "$(layers)"
+      },
+      {
+        "command": "apiWorkbench.editCredential",
+        "title": "Edit Credential…",
+        "category": "API Workbench",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "apiWorkbench.openEnvironments",
+        "title": "Open Environments",
+        "category": "API Workbench",
+        "icon": "$(table)"
+      },
+      {
+        "command": "apiWorkbench.addVariable",
+        "title": "Add Variable…",
+        "category": "API Workbench",
+        "icon": "$(add)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "apiWorkbench.newRequest",
+          "when": "view == apiWorkbench.explorer",
+          "group": "navigation@0"
+        },
+        {
+          "command": "apiWorkbench.run",
+          "when": "view == apiWorkbench.explorer",
+          "group": "navigation@1"
+        },
+        {
+          "command": "apiWorkbench.selectEnvironment",
+          "when": "view == apiWorkbench.explorer",
+          "group": "navigation@2"
+        },
+        {
+          "command": "apiWorkbench.refresh",
+          "when": "view == apiWorkbench.explorer",
+          "group": "navigation@3"
+        },
+        {
+          "command": "apiWorkbench.importCollection",
+          "when": "view == apiWorkbench.explorer",
+          "group": "more@1"
+        },
+        {
+          "command": "apiWorkbench.openApp",
+          "when": "view == apiWorkbench.explorer",
+          "group": "more@2"
+        },
+        {
+          "command": "apiWorkbench.showOutput",
+          "when": "view == apiWorkbench.explorer",
+          "group": "more@3"
+        },
+        {
+          "command": "apiWorkbench.refresh",
+          "when": "view =~ /^apiWorkbench\\.(environments|specs|mocks)$/",
+          "group": "navigation@9"
+        },
+        {
+          "command": "apiWorkbench.startMock",
+          "when": "view == apiWorkbench.mocks",
+          "group": "navigation@1"
+        },
+        {
+          "command": "apiWorkbench.refreshHistory",
+          "when": "view == apiWorkbench.history",
+          "group": "navigation@1"
+        },
+        {
+          "command": "apiWorkbench.unlockVault",
+          "when": "view == apiWorkbench.credentials",
+          "group": "navigation@1"
+        },
+        {
+          "command": "apiWorkbench.lockVault",
+          "when": "view == apiWorkbench.credentials",
+          "group": "navigation@2"
+        },
+        {
+          "command": "apiWorkbench.clearNetwork",
+          "when": "view == apiWorkbench.network",
+          "group": "navigation@1"
+        },
+        {
+          "command": "apiWorkbench.newCollection",
+          "when": "view == apiWorkbench.explorer",
+          "group": "more@0"
+        },
+        {
+          "command": "apiWorkbench.openRunner",
+          "when": "view == apiWorkbench.explorer",
+          "group": "more@0"
+        },
+        {
+          "command": "apiWorkbench.newEnvironment",
+          "when": "view == apiWorkbench.environments",
+          "group": "navigation@1"
+        },
+        {
+          "command": "apiWorkbench.mockFromSpec",
+          "when": "view == apiWorkbench.specs",
+          "group": "navigation@1"
+        },
+        {
+          "command": "apiWorkbench.refreshCookies",
+          "when": "view == apiWorkbench.cookies",
+          "group": "navigation@1"
+        },
+        {
+          "command": "apiWorkbench.clearCookies",
+          "when": "view == apiWorkbench.cookies",
+          "group": "navigation@2"
+        },
+        {
+          "command": "apiWorkbench.clearHistory",
+          "when": "view == apiWorkbench.history",
+          "group": "navigation@2"
+        },
+        {
+          "command": "apiWorkbench.newRequestFromCurl",
+          "when": "view == apiWorkbench.explorer",
+          "group": "more@0"
+        },
+        {
+          "command": "apiWorkbench.newWorkspace",
+          "when": "view == apiWorkbench.explorer",
+          "group": "more@1"
+        },
+        {
+          "command": "apiWorkbench.teamSync",
+          "when": "view == apiWorkbench.explorer && apiWorkbench.hasTeamGit",
+          "group": "more@2"
+        },
+        {
+          "command": "apiWorkbench.addCredential",
+          "when": "view == apiWorkbench.credentials",
+          "group": "navigation@0"
+        },
+        {
+          "command": "apiWorkbench.forgetVaultPassword",
+          "when": "view == apiWorkbench.credentials",
+          "group": "more@1"
+        },
+        {
+          "command": "apiWorkbench.reportIssue",
+          "when": "view == apiWorkbench.help",
+          "group": "navigation"
+        },
+        {
+          "command": "apiWorkbench.openCredentials",
+          "when": "view == apiWorkbench.credentials",
+          "group": "navigation@1"
+        },
+        {
+          "command": "apiWorkbench.openCertificates",
+          "when": "view == apiWorkbench.credentials",
+          "group": "navigation@2"
+        },
+        {
+          "command": "apiWorkbench.openEnvironments",
+          "when": "view == apiWorkbench.environments",
+          "group": "navigation@1"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "apiWorkbench.sendRequest",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^request\\./",
+          "group": "inline@1"
+        },
+        {
+          "command": "apiWorkbench.run",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^(source\\.(team|app)|folder\\.runnable|request\\.runnable)/",
+          "group": "inline@2"
+        },
+        {
+          "command": "apiWorkbench.openRequest",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^request\\./",
+          "group": "1_run@0"
+        },
+        {
+          "command": "apiWorkbench.sendRequest",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^request\\./",
+          "group": "1_run@1"
+        },
+        {
+          "command": "apiWorkbench.run",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^(source\\.(team|app)|folder\\.runnable|request\\.runnable)/",
+          "group": "1_run@2"
+        },
+        {
+          "command": "apiWorkbench.generateCode",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^request\\.runnable/",
+          "group": "2_request@1"
+        },
+        {
+          "command": "apiWorkbench.copyAsCurl",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^request\\.runnable/",
+          "group": "2_request@2"
+        },
+        {
+          "command": "apiWorkbench.openRequestFile",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^request\\./",
+          "group": "2_request@3"
+        },
+        {
+          "command": "apiWorkbench.selectEnvironment",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^source\\.(team|app)/",
+          "group": "3_source@1"
+        },
+        {
+          "command": "apiWorkbench.filterTags",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^source\\.(team|app)/",
+          "group": "3_source@2"
+        },
+        {
+          "command": "apiWorkbench.importCollection",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^source\\.(team|app)/",
+          "group": "3_source@3"
+        },
+        {
+          "command": "apiWorkbench.useEnvironment",
+          "when": "view == apiWorkbench.environments && viewItem == environment",
+          "group": "inline@1"
+        },
+        {
+          "command": "apiWorkbench.generateFromSpec",
+          "when": "view == apiWorkbench.specs && viewItem == spec",
+          "group": "inline@1"
+        },
+        {
+          "command": "apiWorkbench.startMock",
+          "when": "view == apiWorkbench.mocks && viewItem == mock.stopped",
+          "group": "inline@1"
+        },
+        {
+          "command": "apiWorkbench.stopMock",
+          "when": "view == apiWorkbench.mocks && viewItem == mock.running",
+          "group": "inline@1"
+        },
+        {
+          "command": "apiWorkbench.unlockVault",
+          "when": "view == apiWorkbench.credentials && viewItem == group.app",
+          "group": "inline@1"
+        },
+        {
+          "command": "apiWorkbench.newRequest",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^(source\\.(team|app)|folder\\.)/",
+          "group": "0_new@1"
+        },
+        {
+          "command": "apiWorkbench.newCollection",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^source\\.(team|app)/",
+          "group": "0_new@2"
+        },
+        {
+          "command": "apiWorkbench.openRunner",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^(source\\.(team|app)|folder\\.runnable)/",
+          "group": "1_run@3"
+        },
+        {
+          "command": "apiWorkbench.exportCollection",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^folder\\..*top$/",
+          "group": "3_source@4"
+        },
+        {
+          "command": "apiWorkbench.renameCollection",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^folder\\./",
+          "group": "4_edit@1"
+        },
+        {
+          "command": "apiWorkbench.deleteCollection",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^folder\\./",
+          "group": "4_edit@2"
+        },
+        {
+          "command": "apiWorkbench.deleteRequest",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^request\\./",
+          "group": "4_edit@2"
+        },
+        {
+          "command": "apiWorkbench.setVariable",
+          "when": "view == apiWorkbench.environments && viewItem == variable",
+          "group": "inline@2"
+        },
+        {
+          "command": "apiWorkbench.unsetVariable",
+          "when": "view == apiWorkbench.environments && viewItem == variable",
+          "group": "inline@3"
+        },
+        {
+          "command": "apiWorkbench.useEnvironment",
+          "when": "view == apiWorkbench.environments && viewItem == environment",
+          "group": "1_use@1"
+        },
+        {
+          "command": "apiWorkbench.addVariable",
+          "when": "view == apiWorkbench.environments && viewItem =~ /^environment/",
+          "group": "2_edit@1"
+        },
+        {
+          "command": "apiWorkbench.newEnvironment",
+          "when": "view == apiWorkbench.environments && viewItem =~ /^environment/",
+          "group": "2_edit@2"
+        },
+        {
+          "command": "apiWorkbench.renameEnvironment",
+          "when": "view == apiWorkbench.environments && viewItem =~ /^environment/",
+          "group": "2_edit@3"
+        },
+        {
+          "command": "apiWorkbench.deleteEnvironment",
+          "when": "view == apiWorkbench.environments && viewItem =~ /^environment/",
+          "group": "2_edit@4"
+        },
+        {
+          "command": "apiWorkbench.newEnvironment",
+          "when": "view == apiWorkbench.environments && viewItem =~ /^group\\./",
+          "group": "inline@1"
+        },
+        {
+          "command": "apiWorkbench.mockFromSpec",
+          "when": "view == apiWorkbench.specs && viewItem == spec",
+          "group": "inline@2"
+        },
+        {
+          "command": "apiWorkbench.previewDocs",
+          "when": "view == apiWorkbench.specs && viewItem == spec",
+          "group": "inline@3"
+        },
+        {
+          "command": "apiWorkbench.deleteCookie",
+          "when": "view == apiWorkbench.cookies && viewItem == cookie",
+          "group": "inline@1"
+        },
+        {
+          "command": "apiWorkbench.clearCookies",
+          "when": "view == apiWorkbench.cookies && viewItem == group.app",
+          "group": "inline@1"
+        },
+        {
+          "command": "apiWorkbench.clearHistory",
+          "when": "view == apiWorkbench.history && viewItem == group.app",
+          "group": "inline@1"
+        },
+        {
+          "command": "apiWorkbench.newRequestFromCurl",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^(source\\.(team|app)|folder\\.)/",
+          "group": "0_new@3"
+        },
+        {
+          "command": "apiWorkbench.teamSync",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^source\\..*\\.git$/",
+          "group": "inline@3"
+        },
+        {
+          "command": "apiWorkbench.teamStatus",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^source\\..*\\.git$/",
+          "group": "5_team@1"
+        },
+        {
+          "command": "apiWorkbench.teamCommit",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^source\\..*\\.git$/",
+          "group": "5_team@2"
+        },
+        {
+          "command": "apiWorkbench.teamPull",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^source\\..*\\.git$/",
+          "group": "5_team@3"
+        },
+        {
+          "command": "apiWorkbench.teamPush",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^source\\..*\\.git$/",
+          "group": "5_team@4"
+        },
+        {
+          "command": "apiWorkbench.teamSync",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^source\\..*\\.git$/",
+          "group": "5_team@5"
+        },
+        {
+          "command": "apiWorkbench.renameWorkspace",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^source\\.app/",
+          "group": "6_workspace@1"
+        },
+        {
+          "command": "apiWorkbench.deleteWorkspace",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^source\\.app/",
+          "group": "6_workspace@2"
+        },
+        {
+          "command": "apiWorkbench.collectionDocs",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^folder\\./",
+          "group": "3_source@5"
+        },
+        {
+          "command": "apiWorkbench.specFromCollection",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^folder\\./",
+          "group": "3_source@6"
+        },
+        {
+          "command": "apiWorkbench.mockFromCollection",
+          "when": "view == apiWorkbench.explorer && viewItem =~ /^folder\\./",
+          "group": "3_source@7"
+        },
+        {
+          "command": "apiWorkbench.resendHistory",
+          "when": "view == apiWorkbench.history && viewItem == history.request",
+          "group": "inline@1"
+        },
+        {
+          "command": "apiWorkbench.addCredential",
+          "when": "view == apiWorkbench.credentials && viewItem == group.app",
+          "group": "inline@2"
+        },
+        {
+          "command": "apiWorkbench.deleteCredential",
+          "when": "view == apiWorkbench.credentials && viewItem == secret",
+          "group": "inline@1"
+        },
+        {
+          "command": "apiWorkbench.editCredential",
+          "when": "view == apiWorkbench.credentials && viewItem == secret",
+          "group": "inline@0"
+        },
+        {
+          "command": "apiWorkbench.openCredentials",
+          "when": "view == apiWorkbench.credentials && viewItem == group.app",
+          "group": "inline@1"
+        },
+        {
+          "command": "apiWorkbench.openCertificates",
+          "when": "view == apiWorkbench.credentials && viewItem =~ /^group/",
+          "group": "inline@2"
+        },
+        {
+          "command": "apiWorkbench.addVariable",
+          "when": "view == apiWorkbench.environments && viewItem =~ /^environment/",
+          "group": "inline@1"
+        },
+        {
+          "command": "apiWorkbench.openEnvironments",
+          "when": "view == apiWorkbench.environments && viewItem =~ /^environment/",
+          "group": "inline@0"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "apiWorkbench.sendRequest",
+          "when": "editorLangId == http",
+          "group": "navigation@1"
+        },
+        {
+          "command": "apiWorkbench.generateFromSpec",
+          "when": "resourceScheme == apiworkbench-spec",
+          "group": "navigation@1"
+        },
+        {
+          "command": "apiWorkbench.previewDocs",
+          "when": "resourceScheme == apiworkbench-spec",
+          "group": "navigation@2"
+        },
+        {
+          "command": "apiWorkbench.chooseHttpEnvironment",
+          "when": "editorLangId == http",
+          "group": "navigation@9"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "apiWorkbench.sendRequest",
+          "when": "editorLangId == http",
+          "group": "apiWorkbench@1"
+        },
+        {
+          "command": "apiWorkbench.generateCode",
+          "when": "editorLangId == http",
+          "group": "apiWorkbench@2"
+        },
+        {
+          "command": "apiWorkbench.saveToCollection",
+          "when": "editorLangId == http",
+          "group": "apiWorkbench@3"
+        },
+        {
+          "command": "apiWorkbench.openHttpRequest",
+          "when": "editorLangId == http",
+          "group": "apiWorkbench@4"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "apiWorkbench.importCollection",
+          "when": "resourceExtname =~ /^\\.(json|ya?ml|http|rest|har|bru)$/",
+          "group": "apiWorkbench@1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "apiWorkbench.openRequest",
+          "when": "false"
+        },
+        {
+          "command": "apiWorkbench.useEnvironment",
+          "when": "false"
+        },
+        {
+          "command": "apiWorkbench.openRequestFile",
+          "when": "false"
+        },
+        {
+          "command": "apiWorkbench.copyAsCurl",
+          "when": "false"
+        },
+        {
+          "command": "apiWorkbench.saveToCollection",
+          "when": "editorLangId == http"
+        },
+        {
+          "command": "apiWorkbench.generateCode",
+          "when": "editorLangId == http"
+        },
+        {
+          "command": "apiWorkbench.lintSpec",
+          "when": "resourceExtname =~ /^\\.(json|ya?ml)$/ || resourceScheme == apiworkbench-spec"
+        },
+        {
+          "command": "apiWorkbench.importSpec",
+          "when": "resourceScheme == file && resourceExtname =~ /^\\.(json|ya?ml)$/"
+        },
+        {
+          "command": "apiWorkbench.openHttpRequest",
+          "when": "false"
+        },
+        {
+          "command": "apiWorkbench.deleteRequest",
+          "when": "false"
+        },
+        {
+          "command": "apiWorkbench.renameCollection",
+          "when": "false"
+        },
+        {
+          "command": "apiWorkbench.deleteCollection",
+          "when": "false"
+        },
+        {
+          "command": "apiWorkbench.exportCollection",
+          "when": "false"
+        },
+        {
+          "command": "apiWorkbench.renameEnvironment",
+          "when": "false"
+        },
+        {
+          "command": "apiWorkbench.deleteEnvironment",
+          "when": "false"
+        },
+        {
+          "command": "apiWorkbench.setVariable",
+          "when": "false"
+        },
+        {
+          "command": "apiWorkbench.unsetVariable",
+          "when": "false"
+        },
+        {
+          "command": "apiWorkbench.deleteCookie",
+          "when": "false"
+        },
+        {
+          "command": "apiWorkbench.previewDocs",
+          "when": "resourceExtname =~ /^\\.(json|ya?ml)$/ || resourceScheme == apiworkbench-spec"
+        },
+        {
+          "command": "apiWorkbench.resendHistory",
+          "when": "false"
+        },
+        {
+          "command": "apiWorkbench.renameWorkspace",
+          "when": "false"
+        },
+        {
+          "command": "apiWorkbench.deleteWorkspace",
+          "when": "false"
+        },
+        {
+          "command": "apiWorkbench.deleteCredential",
+          "when": "false"
+        },
+        {
+          "command": "apiWorkbench.collectionDocs",
+          "when": "false"
+        },
+        {
+          "command": "apiWorkbench.specFromCollection",
+          "when": "false"
+        },
+        {
+          "command": "apiWorkbench.mockFromCollection",
+          "when": "false"
+        },
+        {
+          "command": "apiWorkbench.teamStatus",
+          "when": "apiWorkbench.hasTeamGit"
+        },
+        {
+          "command": "apiWorkbench.teamCommit",
+          "when": "apiWorkbench.hasTeamGit"
+        },
+        {
+          "command": "apiWorkbench.teamPull",
+          "when": "apiWorkbench.hasTeamGit"
+        },
+        {
+          "command": "apiWorkbench.teamPush",
+          "when": "apiWorkbench.hasTeamGit"
+        },
+        {
+          "command": "apiWorkbench.teamSync",
+          "when": "apiWorkbench.hasTeamGit"
+        },
+        {
+          "command": "apiWorkbench.editCredential",
+          "when": "false"
+        },
+        {
+          "command": "apiWorkbench.addVariable",
+          "when": "false"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "API Workbench",
+      "properties": {
+        "apiWorkbench.showAppWorkspaces": {
+          "type": "boolean",
+          "default": true,
+          "description": "Also list the API Workbench app's own workspaces, besides team workspace folders in the open workspace."
+        },
+        "apiWorkbench.saveSends": {
+          "type": "boolean",
+          "default": true,
+          "description": "Keep requests sent from VS Code in the app workspace's History, and save the values they capture into its environment, as Send does in the app. Team folders are never changed by a send."
+        },
+        "apiWorkbench.scripts": {
+          "type": "string",
+          "enum": [
+            "ask",
+            "allow",
+            "skip"
+          ],
+          "enumDescriptions": [
+            "Ask the first time requests with scripts are sent or run in a window.",
+            "Always run the requests' pre-request and post-response scripts.",
+            "Always send and run requests without their scripts."
+          ],
+          "default": "ask",
+          "scope": "machine",
+          "markdownDescription": "Whether to run requests' pre-request and post-response scripts, which run code from the workspace. Only your user settings can change this, never a workspace's."
+        },
+        "apiWorkbench.confirmNewHosts": {
+          "type": "boolean",
+          "default": true,
+          "scope": "machine",
+          "markdownDescription": "Ask before a request from a `.http` file or a team folder — both come with a repository — goes to a host that no request from this workspace has gone to, after its `{{variables}}` are filled in. A repository can point a request at any server, with your environment's values and captured tokens in it. A run asks about every new host before it sends anything, and afterwards only about one an earlier response's capture supplies. Live requests ask before they connect. Requests to this computer, and from the app's own workspaces, never ask; **Always Allow This Host** remembers a host for the workspace, and [Forget Approved Hosts](command:apiWorkbench.forgetAllowedHosts) asks again. Only your user settings can turn this off."
+        },
+        "apiWorkbench.toolsUseSavedCredentials": {
+          "type": "boolean",
+          "default": true,
+          "scope": "machine",
+          "markdownDescription": "Whether language model tools, such as Copilot's `#sendApiRequest` and `#runApiTests`, send requests with their saved credentials while the credential vault is unlocked. Turn it off to keep saved credentials away from tools: a request that uses one is then not sent by a tool, only by you. Only your user settings can change this, never a workspace's."
+        },
+        "apiWorkbench.engine": {
+          "type": "string",
+          "enum": [
+            "commandLine",
+            "builtIn"
+          ],
+          "default": "builtIn",
+          "scope": "machine",
+          "enumDescriptions": [
+            "Run each command with the bundled command line, in its own Node.js process: slower, as each starts a process, but kept apart from the editor.",
+            "Run inside VS Code (the default): the command line's code is loaded into VS Code once and called directly, so commands answer at once, with no separate process or Node.js to install. A VS Code whose Node.js is older than 22.19 uses commandLine instead."
+          ],
+          "markdownDescription": "How API Workbench runs its commands. **builtIn**, the default, runs them inside VS Code, so they answer at once; **commandLine** starts a process for each, which takes about a second longer but keeps long runs apart from the editor. Only your user settings can change this."
+        },
+        "apiWorkbench.nodePath": {
+          "type": "string",
+          "default": "",
+          "scope": "machine",
+          "markdownDescription": "Node.js 22.19 or later to run the command line with. Empty: `node` on PATH when it is new enough, otherwise VS Code's own runtime when that is. Only your user settings can change this."
+        },
+        "apiWorkbench.cliPath": {
+          "type": "string",
+          "default": "",
+          "scope": "machine",
+          "markdownDescription": "Another copy of the API Workbench command line (`api-workbench.cjs`) to use instead of the one in this extension. Only your user settings can change this."
+        },
+        "apiWorkbench.dataDir": {
+          "type": "string",
+          "default": "",
+          "scope": "machine",
+          "markdownDescription": "The API Workbench app's data folder, when it is not the usual one (as `--data-dir` and `API_WORKBENCH_DATA_DIR` give it)."
+        },
+        "apiWorkbench.reportDiagnostics": {
+          "type": "boolean",
+          "default": true,
+          "scope": "application",
+          "markdownDescription": "Fill in VS Code's version, the platform, and how the command line runs when you report a problem on GitHub — never paths, names, or what your requests hold.\n\n**Help and feedback:** [Report a problem](command:apiWorkbench.reportIssue) · [Request a feature](command:apiWorkbench.requestFeature) · [Search known issues](command:apiWorkbench.searchIssues) · [Report a security vulnerability](command:apiWorkbench.reportVulnerability) · [Documentation](command:apiWorkbench.openDocs) · [Troubleshooting and FAQ](command:apiWorkbench.openTroubleshooting) · [What's new](command:apiWorkbench.openChangelog) · [View on GitHub](command:apiWorkbench.openRepository)"
+        },
+        "apiWorkbench.showTestResults": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Open the **Test results** page when a run in the Testing view or **Run Tests** finishes: a summary, each request's tests, and the run's output."
+        }
+      }
+    },
+    "languages": [
+      {
+        "id": "http",
+        "aliases": [
+          "HTTP",
+          "http"
+        ],
+        "extensions": [
+          ".http",
+          ".rest"
+        ],
+        "configuration": "./media/http.language.json",
+        "icon": {
+          "light": "media/icon-light.svg",
+          "dark": "media/icon-dark.svg"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "http",
+        "scopeName": "source.http.api-workbench",
+        "path": "./media/http.tmLanguage.json"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "apiWorkbench.sendRequest",
+        "key": "ctrl+enter",
+        "mac": "cmd+enter",
+        "when": "editorTextFocus && editorLangId == http"
+      },
+      {
+        "command": "apiWorkbench.selectEnvironment",
+        "key": "ctrl+shift+e",
+        "mac": "cmd+shift+e",
+        "when": "(editorTextFocus && editorLangId == http) || focusedView =~ /^apiWorkbench\\./ || activeWebviewPanelId == 'apiWorkbench.panel'"
+      }
+    ],
+    "languageModelTools": [
+      {
+        "name": "apiWorkbench_listRequests",
+        "toolReferenceName": "apiRequests",
+        "displayName": "List API Workbench requests",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(list-tree)",
+        "tags": [
+          "api",
+          "http"
+        ],
+        "userDescription": "Lists the collections and requests of the open API Workbench workspaces.",
+        "modelDescription": "Lists the saved API requests of the API Workbench workspaces open in VS Code (team folders in the repository and the API Workbench app's own workspaces): each request's method, collection/folder, name, id, and tags, and the environment in use. Use it before sending a request or running tests, to find the request's name or id and the workspace.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "workspace": {
+              "type": "string",
+              "description": "The API Workbench workspace (as listed by apiWorkbench_listRequests); optional when only one is open."
+            }
+          }
+        }
+      },
+      {
+        "name": "apiWorkbench_sendRequest",
+        "toolReferenceName": "sendApiRequest",
+        "displayName": "Send an API Workbench request",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(send)",
+        "tags": [
+          "api",
+          "http"
+        ],
+        "userDescription": "Sends a saved API Workbench request and returns its response. Asks first.",
+        "modelDescription": "Sends one saved API Workbench request exactly as the API Workbench app would, with its environment's variables and saved credentials, and returns the status, timing, test results, response headers (secret-looking values hidden), and up to 16 KB of the body. The person confirms each send. It does not change the workspace. Live-protocol requests (WebSocket, gRPC, SSE) cannot be sent.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "request"
+          ],
+          "properties": {
+            "request": {
+              "type": "string",
+              "description": "The request's id or name."
+            },
+            "workspace": {
+              "type": "string",
+              "description": "The API Workbench workspace (as listed by apiWorkbench_listRequests); optional when only one is open."
+            },
+            "environment": {
+              "type": "string",
+              "description": "An environment of the workspace; defaults to the one in use."
+            }
+          }
+        }
+      },
+      {
+        "name": "apiWorkbench_runTests",
+        "toolReferenceName": "runApiTests",
+        "displayName": "Run API Workbench tests",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(beaker)",
+        "tags": [
+          "api",
+          "testing"
+        ],
+        "userDescription": "Runs the requests of a collection with their tests. Asks first.",
+        "modelDescription": "Sends every request of an API Workbench workspace, or of one collection or folder, in order, with the environment in use, and runs their tests. Returns whether the run passed, the counts, and each request that failed with its failed tests. The person confirms each run.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "workspace": {
+              "type": "string",
+              "description": "The API Workbench workspace (as listed by apiWorkbench_listRequests); optional when only one is open."
+            },
+            "collection": {
+              "type": "string",
+              "description": "A collection or folder path such as \"Users\" or \"Users/Admin\"; all requests when omitted."
+            }
+          }
+        }
+      },
+      {
+        "name": "apiWorkbench_checkSpec",
+        "toolReferenceName": "checkOpenApi",
+        "displayName": "Check an OpenAPI specification",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(checklist)",
+        "tags": [
+          "api",
+          "openapi"
+        ],
+        "userDescription": "Checks an OpenAPI or Swagger file in the workspace for errors and warnings.",
+        "modelDescription": "Checks an OpenAPI 3 or Swagger 2 file (.yaml, .yml, or .json) inside the open workspace's folders, as API Workbench does, and returns its title, version, operation count, and each error or warning with its line. Use it after editing a specification.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "The file's path, relative to the workspace folder or absolute within it."
+            }
+          }
+        }
+      }
+    ],
+    "walkthroughs": [
+      {
+        "id": "gettingStarted",
+        "title": "Get started with API Workbench",
+        "description": "Send, edit, and test your API requests without leaving VS Code.",
+        "steps": [
+          {
+            "id": "workspace",
+            "title": "Find your API workspaces",
+            "description": "Team folders in this repository and the API Workbench app's workspaces are listed in the sidebar.\n[Open API Workbench](command:workbench.view.extension.apiWorkbench)\n[Import a Collection](command:apiWorkbench.importCollection)\n[Read the guide](https://techieutils.github.io/api-workbench/docs/vscode.html#what-it-shows)",
+            "media": {
+              "markdown": "media/walkthrough/workspace.md"
+            },
+            "completionEvents": [
+              "onView:apiWorkbench.explorer"
+            ]
+          },
+          {
+            "id": "send",
+            "title": "Edit and send a request",
+            "description": "Open a request, change it, save it, and send it.\n[Send a Request](command:apiWorkbench.sendRequest)\n[New Request](command:apiWorkbench.newRequest)\n[Read the guide](https://techieutils.github.io/api-workbench/docs/vscode.html#send-a-request)",
+            "media": {
+              "markdown": "media/walkthrough/send.md"
+            },
+            "completionEvents": [
+              "onCommand:apiWorkbench.sendRequest",
+              "onCommand:apiWorkbench.openRequest"
+            ]
+          },
+          {
+            "id": "http",
+            "title": "Write requests in .http files",
+            "description": "Send requests straight from a .http or .rest file.\n[Create a .http File](command:workbench.action.files.newUntitledFile?%7B%22languageId%22%3A%22http%22%7D)\n[Read the guide](https://techieutils.github.io/api-workbench/docs/vscode.html#http-files)",
+            "media": {
+              "markdown": "media/walkthrough/http.md"
+            },
+            "completionEvents": [
+              "onLanguage:http"
+            ]
+          },
+          {
+            "id": "test",
+            "title": "Test, mock, and ask Copilot",
+            "description": "Run tests, load test, serve mocks, and let Copilot's agent mode use your requests.\n[Open the Runner](command:apiWorkbench.openRunner)\n[Read the guide](https://techieutils.github.io/api-workbench/docs/vscode.html#run-tests)",
+            "media": {
+              "markdown": "media/walkthrough/test.md"
+            },
+            "completionEvents": [
+              "onCommand:apiWorkbench.run",
+              "onCommand:apiWorkbench.openRunner"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "node ../../node_modules/typescript-build/bin/tsc -p tsconfig.spec.json --noEmit",
+    "test": "npm --prefix ../api-workbench-cli run bundle && node ../../node_modules/typescript-build/bin/tsc -p tsconfig.spec.json && node --test \"dist-spec/**/*.spec.js\"",
+    "test:vscode": "node scripts/build.mjs && node ../../node_modules/typescript-build/bin/tsc -p tsconfig.spec.json && node scripts/test-in-vscode.mjs",
+    "package": "npm --prefix ../api-workbench-cli run bundle && node scripts/build.mjs && node scripts/package.mjs",
+    "format": "prettier --write \"src/**/*.ts\" \"scripts/*.mjs\" \"*.json\" \"*.md\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"scripts/*.mjs\" \"*.json\" \"*.md\"",
+    "clean": "node -e \"for (const d of ['dist', 'dist-spec']) require('fs').rmSync(d, { recursive: true, force: true })\""
+  },
+  "devDependencies": {
+    "@techieutils/api-workbench-common": "1.0.0",
+    "@techieutils/api-workbench-electron": "1.0.0",
+    "@types/vscode": "1.145.0",
+    "@vscode/vsce": "4.1.0"
+  }
+}

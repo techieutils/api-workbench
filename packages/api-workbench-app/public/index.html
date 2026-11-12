@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self'; script-src 'self'; connect-src https: http:; img-src 'self' data: blob:; media-src blob:; frame-src blob:; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <title>API Workbench</title>
+    <meta name="theme-color" content="#07194e" />
+    <link rel="icon" href="assets/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png" />
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+    <script src="startup-theme.js"></script>
+    <link rel="stylesheet" href="startup.css" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div
+        class="initialization-screen"
+        role="status"
+        aria-live="polite"
+        aria-label="Initializing API Workbench"
+      >
+        <div class="initialization-mark">
+          <span class="initialization-ring" aria-hidden="true"></span
+          ><img
+            class="initialization-icon-dark"
+            src="assets/branding/app-icon-dark.png"
+            alt=""
+            width="56"
+            height="56"
+          /><img
+            class="initialization-icon-light"
+            src="assets/branding/app-icon-light.png"
+            alt=""
+            width="56"
+            height="56"
+          />
+        </div>
+        <strong>API Workbench</strong>
+        <p>Initializing your workspace…</p>
+      </div>
+    </div>
+    <script defer src="editor-runtime.js"></script>
+    <script defer src="mdi-paths.js"></script>
+    <script defer src="collection-transfer-runtime.js"></script>
+    <!-- The Vue shell runs last: its stores call the runtimes above. -->
+    <script defer src="vue-shell.js"></script>
+  </body>
+</html>

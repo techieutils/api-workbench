@@ -1,0 +1,126 @@
+name: Release
+
+# Pushing a version tag (v1.2.0, or v1.3.0-beta.1 for a pre-release) builds every platform and
+# uploads the installers to a draft GitHub release, with the latest*.yml files and blockmaps that
+# installed copies read to find and verify updates. Publishing the draft releases the update.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build for ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: macOS, os: macos-latest, args: --mac }
+          - { name: Windows, os: windows-latest, args: --win }
+          - { name: Linux, os: ubuntu-latest, args: --linux }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install Linux packaging tools
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y rpm
+      - name: Check the tag matches package.json
+        shell: bash
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "${GITHUB_REF_NAME}" != "v${version}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match package.json version ${version}."
+            exit 1
+          fi
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run compile:prod
+      - name: Build and upload to the draft release
+        run: npx electron-builder ${{ matrix.args }} --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # macOS updates install only into a signed app. Add these secrets to sign and notarize.
+          # Notarization runs when the Apple ID is set, and only for a signed build: Apple refuses
+          # unsigned apps, so without a certificate the Apple ID is left out and the step is skipped.
+          CSC_LINK: ${{ secrets.MAC_CERTIFICATE }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.MAC_CERTIFICATE != '' && secrets.APPLE_ID || '' }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.MAC_CERTIFICATE != '' }}
+          # Windows installers are signed when these are set; without them SmartScreen warns.
+          WIN_CSC_LINK: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+
+  checksums:
+    name: Publish SHA256SUMS
+    # Only once every platform has uploaded, so the list covers the whole release.
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      # Signing the attestations: a short-lived certificate for this workflow run, from GitHub.
+      id-token: write
+      attestations: write
+    steps:
+      # The command line for CI pipelines is one JavaScript file that runs with Node.js 22.19+.
+      # It is attached before the checksums, so SHA256SUMS and the attestations cover it too.
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Bundle and attach the command line
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          npm run build -w @techieutils/api-workbench-common
+          npm run build -w @techieutils/api-workbench-electron
+          npm run bundle -w @techieutils/api-workbench-cli
+          cp packages/api-workbench-cli/dist/api-workbench.cjs "$RUNNER_TEMP/api-workbench-cli.cjs"
+          node "$RUNNER_TEMP/api-workbench-cli.cjs" --version
+          gh release upload "$GITHUB_REF_NAME" "$RUNNER_TEMP/api-workbench-cli.cjs" --clobber
+      # The VS Code extension, with the same command line inside, for "Install from VSIX…". It is
+      # attached before the checksums, so SHA256SUMS and the attestations cover it too.
+      - name: Package and attach the VS Code extension
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          npm run package -w api-workbench-vscode
+          gh release upload "$GITHUB_REF_NAME" packages/api-workbench-vscode/dist/api-workbench-vscode-*.vsix --clobber
+      - name: Checksum the draft release's files
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        # Checksums are taken from the files as GitHub serves them, under their published names,
+        # so `sha256sum --check` works on exactly what people download.
+        run: |
+          mkdir "$RUNNER_TEMP/assets" && cd "$RUNNER_TEMP/assets"
+          gh release download "$GITHUB_REF_NAME"
+          rm -f SHA256SUMS
+          sha256sum -- * | sort -k 2 > "$RUNNER_TEMP/SHA256SUMS"
+          cat "$RUNNER_TEMP/SHA256SUMS"
+          gh release upload "$GITHUB_REF_NAME" "$RUNNER_TEMP/SHA256SUMS" --clobber
+      # A signed record that each file was built by this workflow from this tag's commit, which
+      # `gh attestation verify` checks. Unlike SHA256SUMS, it cannot be rewritten by someone who
+      # can only edit the release.
+      - name: Attest where the files were built
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-checksums: ${{ runner.temp }}/SHA256SUMS

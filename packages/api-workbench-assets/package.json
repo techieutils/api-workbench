@@ -1,0 +1,19 @@
+{
+  "name": "@techieutils/api-workbench-assets",
+  "version": "1.0.0",
+  "description": "API Workbench native application icons: macOS, Windows, and Linux, in light and dark variants.",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "typecheck": "node ../../node_modules/typescript-build/bin/tsc -p tsconfig.spec.json --noEmit",
+    "test": "node ../../node_modules/typescript-build/bin/tsc -p tsconfig.spec.json && node --test \"dist-spec/**/*.spec.js\"",
+    "lint": "eslint src --max-warnings=0",
+    "format": "prettier --write \"src/**/*.ts\" \"*.json\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"*.json\"",
+    "clean": "node -e \"require('fs').rmSync('dist-spec', { recursive: true, force: true })\""
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    "./icons/*": "./src/icons/*"
+  }
+}

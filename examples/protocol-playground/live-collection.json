@@ -1,0 +1,211 @@
+{
+  "requests": [
+    {
+      "name": "WebSocket text and binary echo",
+      "protocol": "websocket",
+      "method": "GET",
+      "url": "ws://127.0.0.1:4780/ws",
+      "folder": "Live protocols",
+      "params": [],
+      "headers": [],
+      "body": "Hello from Workbench",
+      "auth": "None",
+      "token": "",
+      "username": "",
+      "password": "",
+      "tests": ""
+    },
+    {
+      "name": "Live SSE events",
+      "protocol": "sse",
+      "method": "GET",
+      "url": "http://127.0.0.1:4780/events?count=3&interval=100",
+      "folder": "Live protocols",
+      "params": [],
+      "headers": [],
+      "body": "",
+      "auth": "None",
+      "token": "",
+      "username": "",
+      "password": "",
+      "tests": ""
+    },
+    {
+      "name": "Live NDJSON events",
+      "protocol": "ndjson",
+      "method": "GET",
+      "url": "http://127.0.0.1:4780/ndjson?count=3&interval=100",
+      "folder": "Live protocols",
+      "params": [],
+      "headers": [],
+      "body": "",
+      "auth": "None",
+      "token": "",
+      "username": "",
+      "password": "",
+      "tests": ""
+    },
+    {
+      "name": "gRPC unary Echo",
+      "protocol": "grpc",
+      "method": "GET",
+      "url": "127.0.0.1:4781",
+      "folder": "Live protocols",
+      "params": [],
+      "headers": [],
+      "body": "{\"message\":\"Hello from Workbench\"}",
+      "auth": "None",
+      "token": "",
+      "username": "",
+      "password": "",
+      "tests": "",
+      "grpc": {
+        "proto": "syntax = \"proto3\";\npackage playground;\n\nservice EchoService {\n  rpc Echo (EchoRequest) returns (EchoReply);\n  rpc Count (CountRequest) returns (stream CountReply);\n  rpc Collect (stream EchoRequest) returns (EchoReply);\n  rpc Chat (stream EchoRequest) returns (stream EchoReply);\n}\nmessage EchoRequest { string message = 1; }\nmessage EchoReply { string message = 1; string protocol = 2; }\nmessage CountRequest { int32 count = 1; }\nmessage CountReply { int32 value = 1; }\n",
+        "method": "/playground.EchoService/Echo",
+        "tls": false
+      }
+    },
+    {
+      "name": "gRPC server-streaming Count",
+      "protocol": "grpc",
+      "method": "GET",
+      "url": "127.0.0.1:4781",
+      "folder": "Live protocols",
+      "params": [],
+      "headers": [],
+      "body": "{\"count\":3}",
+      "auth": "None",
+      "token": "",
+      "username": "",
+      "password": "",
+      "tests": "",
+      "grpc": {
+        "proto": "syntax = \"proto3\";\npackage playground;\n\nservice EchoService {\n  rpc Echo (EchoRequest) returns (EchoReply);\n  rpc Count (CountRequest) returns (stream CountReply);\n  rpc Collect (stream EchoRequest) returns (EchoReply);\n  rpc Chat (stream EchoRequest) returns (stream EchoReply);\n}\nmessage EchoRequest { string message = 1; }\nmessage EchoReply { string message = 1; string protocol = 2; }\nmessage CountRequest { int32 count = 1; }\nmessage CountReply { int32 value = 1; }\n",
+        "method": "/playground.EchoService/Count",
+        "tls": false
+      }
+    },
+    {
+      "name": "gRPC client-streaming Collect",
+      "protocol": "grpc",
+      "method": "GET",
+      "url": "127.0.0.1:4781",
+      "folder": "Live protocols",
+      "params": [],
+      "headers": [],
+      "body": "{\"message\":\"First message\"}",
+      "auth": "None",
+      "token": "",
+      "username": "",
+      "password": "",
+      "tests": "",
+      "grpc": {
+        "proto": "syntax = \"proto3\";\npackage playground;\n\nservice EchoService {\n  rpc Echo (EchoRequest) returns (EchoReply);\n  rpc Count (CountRequest) returns (stream CountReply);\n  rpc Collect (stream EchoRequest) returns (EchoReply);\n  rpc Chat (stream EchoRequest) returns (stream EchoReply);\n}\nmessage EchoRequest { string message = 1; }\nmessage EchoReply { string message = 1; string protocol = 2; }\nmessage CountRequest { int32 count = 1; }\nmessage CountReply { int32 value = 1; }\n",
+        "method": "/playground.EchoService/Collect",
+        "tls": false
+      }
+    },
+    {
+      "name": "gRPC bidirectional Chat",
+      "protocol": "grpc",
+      "method": "GET",
+      "url": "127.0.0.1:4781",
+      "folder": "Live protocols",
+      "params": [],
+      "headers": [],
+      "body": "{\"message\":\"Hello chat\"}",
+      "auth": "None",
+      "token": "",
+      "username": "",
+      "password": "",
+      "tests": "",
+      "grpc": {
+        "proto": "syntax = \"proto3\";\npackage playground;\n\nservice EchoService {\n  rpc Echo (EchoRequest) returns (EchoReply);\n  rpc Count (CountRequest) returns (stream CountReply);\n  rpc Collect (stream EchoRequest) returns (EchoReply);\n  rpc Chat (stream EchoRequest) returns (stream EchoReply);\n}\nmessage EchoRequest { string message = 1; }\nmessage EchoReply { string message = 1; string protocol = 2; }\nmessage CountRequest { int32 count = 1; }\nmessage CountReply { int32 value = 1; }\n",
+        "method": "/playground.EchoService/Chat",
+        "tls": false
+      }
+    },
+    {
+      "method": "GET",
+      "folder": "Live protocols",
+      "params": [],
+      "headers": [],
+      "auth": "None",
+      "token": "",
+      "username": "",
+      "password": "",
+      "tests": "",
+      "name": "Socket.IO echo with acknowledgement",
+      "protocol": "socketio",
+      "url": "http://127.0.0.1:4780/",
+      "body": "{ \"message\": \"Hello from Workbench\" }",
+      "socketio": {
+        "path": "/socket.io",
+        "event": "echo",
+        "ack": true
+      }
+    },
+    {
+      "method": "GET",
+      "folder": "Live protocols",
+      "params": [],
+      "headers": [],
+      "auth": "None",
+      "token": "",
+      "username": "",
+      "password": "",
+      "tests": "",
+      "name": "MQTT publish and subscribe",
+      "protocol": "mqtt",
+      "url": "mqtt://127.0.0.1:4782",
+      "body": "Hello from Workbench",
+      "mqtt": {
+        "clientId": "",
+        "version": 4,
+        "cleanStart": true,
+        "keepalive": 60,
+        "subscriptions": [
+          {
+            "topic": "playground/#",
+            "qos": 0,
+            "enabled": true
+          }
+        ],
+        "topic": "playground/echo",
+        "qos": 0,
+        "retain": false
+      }
+    },
+    {
+      "method": "GET",
+      "folder": "Live protocols",
+      "params": [],
+      "headers": [],
+      "auth": "None",
+      "token": "",
+      "username": "",
+      "password": "",
+      "tests": "",
+      "name": "MQTT over WebSocket",
+      "protocol": "mqtt",
+      "url": "ws://127.0.0.1:4780/mqtt",
+      "body": "{ \"temperature\": 21.5 }",
+      "mqtt": {
+        "clientId": "",
+        "version": 4,
+        "cleanStart": true,
+        "keepalive": 60,
+        "subscriptions": [
+          {
+            "topic": "playground/sensors/+",
+            "qos": 1,
+            "enabled": true
+          }
+        ],
+        "topic": "playground/sensors/kitchen",
+        "qos": 1,
+        "retain": false
+      }
+    }
+  ]
+}

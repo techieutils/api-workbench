@@ -1,0 +1,85 @@
+/* Small first-paint stylesheet, independent of editor and workspace bundles. */
+html,
+body {
+  margin: 0;
+}
+body:has(.initialization-screen) {
+  background: #090f20;
+}
+.initialization-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: radial-gradient(ellipse at center, #182140 0%, #090f20 65%);
+  color: #edf2fc;
+  font-family: 'Geist', 'Inter', system-ui, sans-serif;
+}
+.initialization-mark {
+  position: relative;
+  display: grid;
+  width: 100px;
+  height: 100px;
+  place-items: center;
+  margin-bottom: 8px;
+}
+.initialization-mark img {
+  width: 56px;
+  height: 56px;
+}
+.initialization-icon-light,
+:root[data-theme='light'] .initialization-icon-dark {
+  display: none;
+}
+:root[data-theme='light'] .initialization-icon-light {
+  display: block;
+}
+:root[data-theme='light'] body:has(.initialization-screen) {
+  background: #f5f7fc;
+}
+:root[data-theme='light'] .initialization-screen {
+  background: radial-gradient(ellipse at center, #ffffff 0%, #f5f7fc 65%);
+  color: #16264b;
+}
+:root[data-theme='light'] .initialization-screen p {
+  color: #687b9b;
+}
+:root[data-theme='light'] .initialization-ring {
+  border-color: #6d1cff1f;
+  border-top-color: #6720d6;
+  border-right-color: #008375;
+}
+.initialization-ring {
+  position: absolute;
+  inset: 0;
+  border: 2px solid #9465ff24;
+  border-top-color: #a681ff;
+  border-right-color: #35d6c4;
+  border-radius: 50%;
+  animation: initialization-spin 1s linear infinite;
+}
+.initialization-screen strong {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+}
+.initialization-screen p {
+  margin: 0;
+  color: #8799ba;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 12px;
+}
+@keyframes initialization-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .initialization-ring {
+    animation: none;
+  }
+}

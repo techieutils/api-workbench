@@ -1,0 +1,341 @@
+{
+  "name": "api-workbench",
+  "version": "1.0.0",
+  "description": "Build, test, debug, and automate APIs in a local-first desktop workspace.",
+  "license": "MIT",
+  "author": {
+    "name": "techieutils",
+    "email": "maintainers@techieutils.com",
+    "url": "https://github.com/techieutils"
+  },
+  "homepage": "https://techieutils.github.io/api-workbench/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/techieutils/api-workbench.git"
+  },
+  "bugs": {
+    "url": "https://github.com/techieutils/api-workbench/issues"
+  },
+  "keywords": [
+    "api",
+    "api-client",
+    "rest",
+    "graphql",
+    "grpc",
+    "websocket",
+    "http",
+    "electron",
+    "local-first"
+  ],
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "main": "packages/api-workbench-electron/dist/bootstrap.js",
+  "desktopName": "api-workbench.desktop",
+  "scripts": {
+    "postinstall": "node scripts/fix-node-pty.mjs",
+    "compile": "npm run build -w @techieutils/api-workbench-common && npm run build -w @techieutils/api-workbench-electron && npm run build -w @techieutils/api-workbench-cli && npm run build:node -w @techieutils/api-workbench-app && node node_modules/typescript-build/bin/tsc -p tsconfig.json && node dist/scripts/copy-assets.js && npm run shell:build && npm run styles:build",
+    "start": "npm run compile && node dist/scripts/launch-electron.js",
+    "dev": "npm start",
+    "build": "npm run lint && npm run format:check && npm run compile:prod && electron-builder --dir",
+    "dist": "npm run lint && npm run format:check && npm run compile:prod && electron-builder",
+    "dist:mac": "npm run lint && npm run format:check && npm run compile:prod && electron-builder --mac",
+    "dist:win": "npm run lint && npm run format:check && npm run compile:prod && electron-builder --win",
+    "dist:linux": "npm run lint && npm run format:check && npm run compile:prod && electron-builder --linux",
+    "dist:all": "npm run lint && npm run format:check && npm run compile:prod && electron-builder --mac --win --linux",
+    "release": "npm run lint && npm run format:check && npm run compile:prod && electron-builder --publish always",
+    "check": "node node_modules/typescript-build/bin/tsc --noEmit && node node_modules/typescript-build/bin/tsc -p e2e/tsconfig.json && npm run typecheck --workspaces --if-present",
+    "preview": "npm run compile && npm run preview -w @techieutils/api-workbench-app",
+    "test": "npm run compile && node --test dist/tests/*.test.js && npm run test --workspaces --if-present",
+    "test:vue": "npm run test:vue -w @techieutils/api-workbench-app",
+    "test:fuzz": "node scripts/fuzz/fuzz.mjs",
+    "test:e2e": "npm run compile && playwright test",
+    "test:ui": "npm run compile && electron dist/scripts/ui-smoke.js",
+    "compile:prod": "npm run build -w @techieutils/api-workbench-common && npm run build -w @techieutils/api-workbench-electron && npm run build:node -w @techieutils/api-workbench-app && node node_modules/typescript-build/bin/tsc -p tsconfig.json && node dist/scripts/copy-assets.js --minify && npm run shell:prod && npm run styles:prod",
+    "lint": "eslint . --max-warnings=0",
+    "lint:fix": "npm run lint -- --fix",
+    "format": "prettier --write \"scripts/**/*.{ts,mjs,js,css}\" \"tests/**/*.ts\" \"e2e/**/*.ts\" playwright.config.ts \"*.{json,mjs}\" && npm run format --workspaces --if-present",
+    "format:check": "prettier --check \"scripts/**/*.{ts,mjs,js,css}\" \"tests/**/*.ts\" \"e2e/**/*.ts\" playwright.config.ts \"*.{json,mjs}\" && npm run format:check --workspaces --if-present",
+    "test:ui:prod": "npm run compile:prod && electron dist/scripts/ui-smoke.js",
+    "styles:build": "npm run build:styles -w @techieutils/api-workbench-app",
+    "styles:prod": "npm run build:styles:prod -w @techieutils/api-workbench-app",
+    "styles:watch": "npm run watch:styles -w @techieutils/api-workbench-app",
+    "test:ui:branded": "npm run compile:prod && node dist/scripts/launch-electron.js --smoke",
+    "cli": "npm run build -w @techieutils/api-workbench-common && npm run build -w @techieutils/api-workbench-electron && npm run build -w @techieutils/api-workbench-cli && node packages/api-workbench-cli/dist/cli.js",
+    "cli:bundle": "npm run build -w @techieutils/api-workbench-common && npm run build -w @techieutils/api-workbench-electron && npm run bundle -w @techieutils/api-workbench-cli",
+    "cli:package": "npm run cli:bundle && node packages/api-workbench-cli/scripts/npm-package.mjs",
+    "vscode:package": "npm run build -w @techieutils/api-workbench-common && npm run build -w @techieutils/api-workbench-electron && npm run package -w api-workbench-vscode",
+    "test:vscode": "npm run cli:bundle && npm run test:vscode -w api-workbench-vscode",
+    "samples:start": "npm --prefix examples/protocol-playground start",
+    "samples:test": "npm --prefix examples/protocol-playground test",
+    "docs:screenshots": "npm run compile:prod && electron dist/scripts/docs-screenshots.js",
+    "docs:demo": "npm run compile:prod && DOCS_DEMO_ONLY=1 electron dist/scripts/docs-screenshots.js",
+    "test:ui:protocols": "npm run compile && electron dist/scripts/protocol-ui-smoke.js",
+    "shell:build": "npm run build:shell -w @techieutils/api-workbench-app",
+    "shell:prod": "npm run build:shell:prod -w @techieutils/api-workbench-app",
+    "site:build": "node scripts/build-site.mjs",
+    "site:preview": "npm run site:build && vite preview --outDir dist/site --port 4174 --strictPort"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "1.65.0",
+    "@techieutils/api-workbench-app": "1.0.0",
+    "@techieutils/api-workbench-assets": "1.0.0",
+    "@types/html-minifier-terser": "^7.0.2",
+    "@types/node": "^26.6.6",
+    "electron": "^45.2.3",
+    "electron-builder": "^26.18.1",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.14.0",
+    "eslint-plugin-vue": "^10.12.1",
+    "globals": "^17.14.0",
+    "html-minifier-terser": "^7.2.0",
+    "marked": "18.2.0",
+    "prettier": "^3.9.10",
+    "typescript": "~6.0.3",
+    "typescript-build": "npm:typescript@^7.0.2",
+    "typescript-eslint": "^8.72.2",
+    "vite": "^8.3.7"
+  },
+  "overrides": {
+    "form-data": "4.0.6"
+  },
+  "private": true,
+  "build": {
+    "appId": "com.techieutils.apiworkbench",
+    "productName": "API Workbench",
+    "copyright": "Copyright © 2026 techieutils and API Workbench contributors",
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+    "electronLanguages": [
+      "en"
+    ],
+    "files": [
+      "packages/api-workbench-electron/dist/**/*",
+      "!packages/api-workbench-electron/dist/testing{,/**/*}",
+      "packages/api-workbench-app/dist/**/*",
+      "package.json",
+      "!node_modules/@techieutils/api-workbench-electron{,/**/*}",
+      "!node_modules/@techieutils/api-workbench-common/{src,dist-spec,tsconfig*.json}{,/**/*}",
+      "!packages/api-workbench-app/dist/node{,/**/*}",
+      "!**/*.map",
+      "!node_modules/node-pty/{deps,src,scripts,third_party,typings}{,/**/*}",
+      "!node_modules/node-pty/prebuilds{,/**/*}",
+      "node_modules/node-pty/prebuilds/${platform}-${arch}{,/**/*}"
+    ],
+    "directories": {
+      "output": "release",
+      "buildResources": "packages/api-workbench-assets/src/icons"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "techieutils",
+        "repo": "api-workbench",
+        "releaseType": "draft"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "pkg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "protocols": [
+        {
+          "name": "API Workbench link",
+          "schemes": [
+            "apiworkbench"
+          ],
+          "role": "Viewer"
+        }
+      ],
+      "icon": "packages/api-workbench-assets/src/icons/icon.icns",
+      "identity": "techieutils",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "notarize": true,
+      "entitlements": "packages/api-workbench-electron/resources/entitlements.mac.plist",
+      "entitlementsInherit": "packages/api-workbench-electron/resources/entitlements.mac.plist",
+      "minimumSystemVersion": "12.0",
+      "darkModeSupport": true,
+      "extendInfo": {
+        "NSLocalNetworkUsageDescription": "API Workbench sends the requests you write, and runs mock servers, on your local network."
+      }
+    },
+    "dmg": {
+      "format": "ULFO",
+      "writeUpdateInfo": false
+    },
+    "pkg": {
+      "installLocation": "/Applications",
+      "isRelocatable": false
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "protocols": [
+        {
+          "name": "API Workbench link",
+          "schemes": [
+            "apiworkbench"
+          ],
+          "role": "Viewer"
+        }
+      ],
+      "icon": "packages/api-workbench-assets/src/icons/icon.ico",
+      "signtoolOptions": {
+        "publisherName": [
+          "techieutils"
+        ],
+        "signingHashAlgorithms": [
+          "sha256"
+        ],
+        "rfc3161TimeStampServer": "http://timestamp.digicert.com"
+      }
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "rpm",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "tar.gz",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "protocols": [
+        {
+          "name": "API Workbench link",
+          "schemes": [
+            "apiworkbench"
+          ],
+          "role": "Viewer"
+        }
+      ],
+      "desktop": {
+        "entry": {
+          "MimeType": "x-scheme-handler/apiworkbench;",
+          "Keywords": "api;rest;graphql;grpc;websocket;http;client;"
+        }
+      },
+      "icon": "packages/api-workbench-assets/src/icons/icon.png",
+      "category": "Development",
+      "maintainer": "techieutils <maintainers@techieutils.com>",
+      "vendor": "techieutils",
+      "synopsis": "Local-first desktop API client",
+      "executableName": "api-workbench",
+      "syncDesktopName": true
+    },
+    "deb": {
+      "priority": "optional"
+    },
+    "extraResources": [
+      {
+        "from": "packages/api-workbench-assets/src/icons",
+        "to": "icons",
+        "filter": [
+          "icon-mac.png",
+          "icon.png",
+          "icon.ico",
+          "light/**/*",
+          "dark/**/*"
+        ]
+      }
+    ],
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "installerIcon": "packages/api-workbench-assets/src/icons/installer.ico",
+      "uninstallerIcon": "packages/api-workbench-assets/src/icons/uninstaller.ico",
+      "artifactName": "${productName}-Setup-${version}.${ext}",
+      "license": "LICENSE",
+      "uninstallDisplayName": "${productName}",
+      "deleteAppDataOnUninstall": false
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-win-portable-${arch}.${ext}"
+    },
+    "asarUnpack": [
+      "node_modules/node-pty/**"
+    ],
+    "electronFuses": {
+      "runAsNode": false,
+      "enableCookieEncryption": true,
+      "enableNodeOptionsEnvironmentVariable": false,
+      "enableNodeCliInspectArguments": false,
+      "enableEmbeddedAsarIntegrityValidation": true,
+      "onlyLoadAppFromAsar": true,
+      "resetAdHocDarwinSignature": true
+    }
+  },
+  "dependencies": {
+    "@techieutils/api-workbench-electron": "1.0.0"
+  }
+}

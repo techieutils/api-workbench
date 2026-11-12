@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint, type-check, and test
+    runs-on: ubuntu-latest
+    env:
+      # The checks and unit tests do not start Electron.
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # Shipped dependencies only; build tools never reach users. Fails on high or critical.
+      - name: Audit dependencies
+        run: npm audit --omit=dev --audit-level=high
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run check
+      - run: npm test
+      # The parsers that read other people's text, against random malformed input (built by
+      # npm test). A failing input is saved, with the seed that made it, to replay.
+      - name: Fuzz the parsers
+        run: npm run test:fuzz
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: fuzz-findings
+          path: fuzz-findings/
+          retention-days: 14
+      # The VS Code extension, packaged as it is released, so a broken manifest fails here.
+      - name: Package the VS Code extension
+        run: npm run vscode:package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vscode-extension
+          path: packages/api-workbench-vscode/dist/*.vsix
+          retention-days: 14
+
+  e2e:
+    name: End-to-end tests (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # Ubuntu 24.04 stops unprivileged user namespaces, which Electron's process sandbox needs.
+      - name: Allow Electron's sandbox
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      # The app opens real windows, so it runs on a virtual display.
+      - run: xvfb-run --auto-servernum npm run test:e2e
+      - name: Keep traces and screenshots of failures
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
+
+  secrets:
+    name: Scan for secrets
+    runs-on: ubuntu-latest
+    steps:
+      # The whole history, so a secret committed and later removed is still found.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # The gitleaks tool itself (MIT, no license key), pinned and checked against its release checksum.
+      - name: Install gitleaks
+        env:
+          GITLEAKS_VERSION: 8.30.1
+          GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+        run: |
+          cd "$RUNNER_TEMP"
+          curl -fsSLo gitleaks.tar.gz "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  gitleaks.tar.gz" | sha256sum --check
+          tar -xzf gitleaks.tar.gz gitleaks
+      # Fails on any finding. Values are redacted in the log; .gitleaks.toml lists what is allowed.
+      - name: Scan the history
+        run: '"$RUNNER_TEMP/gitleaks" git --config .gitleaks.toml --redact --verbose --exit-code 1 .'

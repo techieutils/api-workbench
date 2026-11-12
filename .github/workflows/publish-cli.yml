@@ -1,0 +1,84 @@
+name: Publish the command line
+
+# Publishes the command line to GitHub Packages, as the npm package @techieutils/api-workbench-cli,
+# once a release is published: after the draft that release.yml makes has been reviewed, since a
+# version published to npm can never be replaced. Pre-releases get the `next` tag, so they never
+# become what `npm install` picks by default. Run it by hand to publish a release again, such as
+# after a failed run.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to publish, such as v1.2.0
+        required: true
+
+permissions: {}
+
+concurrency:
+  group: publish-cli-${{ github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish to GitHub Packages
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          registry-url: https://npm.pkg.github.com
+          scope: '@techieutils'
+      - name: Check the tag, version, and package scope
+        run: |
+          version="$(node -p "require('./packages/api-workbench-cli/package.json').version")"
+          if [ "$TAG" != "v${version}" ]; then
+            echo "::error::Tag $TAG does not match the command line's version ${version}."
+            exit 1
+          fi
+          # GitHub Packages takes a package only in the scope of the repository's owner.
+          scope="$(node -p "require('./packages/api-workbench-cli/package.json').name.split('/')[0].slice(1)")"
+          owner="$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')"
+          if [ "$scope" != "$owner" ]; then
+            echo "::error::The package scope @${scope} must be the repository owner, @${owner}."
+            exit 1
+          fi
+          echo "VERSION=${version}" >> "$GITHUB_ENV"
+          # A version with a hyphen, such as 1.3.0-beta.1, is a pre-release.
+          if [[ "$version" == *-* ]]; then echo "DIST_TAG=next" >> "$GITHUB_ENV"; else echo "DIST_TAG=latest" >> "$GITHUB_ENV"; fi
+      - run: npm ci
+      - name: Bundle and package the command line
+        run: |
+          npm run cli:package
+          test "$(node packages/api-workbench-cli/dist/npm/api-workbench.cjs --version)" = "$VERSION"
+      # The package must hold the very file the release attached, which SHA256SUMS and the build
+      # attestation cover. The bundle is built from the same commit and lockfile, so it should be
+      # identical; if it ever is not, nothing is published.
+      - name: Check it matches the release's file
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release download "$TAG" --pattern api-workbench-cli.cjs --dir "$RUNNER_TEMP"
+          released="$(sha256sum "$RUNNER_TEMP/api-workbench-cli.cjs" | cut -d' ' -f1)"
+          packaged="$(sha256sum packages/api-workbench-cli/dist/npm/api-workbench.cjs | cut -d' ' -f1)"
+          if [ "$released" != "$packaged" ]; then
+            echo "::error::The bundle built here (${packaged}) differs from the release's api-workbench-cli.cjs (${released})."
+            exit 1
+          fi
+      - name: Publish
+        working-directory: packages/api-workbench-cli/dist/npm
+        run: npm publish --tag "$DIST_TAG"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

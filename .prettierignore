@@ -1,0 +1,23 @@
+# Prettier 3 also skips everything in .gitignore. These are listed too, so an editor or a run with
+# a different --ignore-path still leaves them alone.
+
+# Dependencies and generated output
+node_modules/
+dist/
+dist-spec/
+release/
+artifacts/
+coverage/
+test-results/
+playwright-report/
+*.tsbuildinfo
+
+# Lockfiles, written by npm
+package-lock.json
+
+# Minified or vendored files, kept as they were shipped
+*.min.js
+*.min.css
+
+# Editor project files
+.idea/

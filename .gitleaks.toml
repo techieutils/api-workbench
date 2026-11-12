@@ -1,0 +1,15 @@
+# gitleaks configuration for CI (the "Scan for secrets" job in .github/workflows/ci.yml).
+# It uses every built-in rule. To allow a value that is not a secret — a public example, or a
+# fixture made for a test — prefer a `gitleaks:allow` comment on its line, so the rest of the
+# file is still scanned. Add a rule below only for something a comment cannot cover.
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Build output and dependencies are not part of the repository's own content."
+paths = [
+  '''(^|/)node_modules/''',
+  '''(^|/)dist(-spec)?/''',
+  '''(^|/)release/''',
+]

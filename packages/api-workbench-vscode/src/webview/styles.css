@@ -1,0 +1,2277 @@
+/*
+ * The extension's webviews, styled with Tailwind CSS as the app is: the same token names
+ * (canvas, panel, line, ink, muted, accent, positive, negative) and a 4px spacing scale, so pages
+ * line up as the app's do, but every colour comes from the editor's theme variables, so each view
+ * follows VS Code's light, dark, and high-contrast themes. Built by scripts/build.mjs into
+ * dist/webview.css: a plain stylesheet, as the webviews' content policy allows no other.
+ *
+ * Class names used in src/webview are scanned, so utilities can be used there too; the reusable
+ * pieces (buttons, fields, cards, tabs, tables) are components below, built from utilities.
+ */
+@import 'tailwindcss' source(none);
+@source '.';
+
+/* Every colour from the editor's theme, under the app's names. */
+@theme inline {
+  --color-canvas: var(--vscode-editor-background);
+  --color-panel: var(--vscode-sideBar-background, var(--vscode-editor-background));
+  --color-elevated: var(--vscode-editorWidget-background, var(--vscode-sideBar-background));
+  --color-hover: var(--vscode-list-hoverBackground);
+  --color-line: var(--vscode-panel-border, var(--vscode-widget-border, rgba(128, 128, 128, 0.35)));
+  --color-ink: var(--vscode-foreground);
+  --color-muted: var(--vscode-descriptionForeground);
+  --color-accent: var(--vscode-textLink-foreground);
+  --color-brand: var(--vscode-button-background);
+  --color-brand-hover: var(--vscode-button-hoverBackground);
+  --color-brand-ink: var(--vscode-button-foreground);
+  --color-secondary: var(--vscode-button-secondaryBackground);
+  --color-secondary-hover: var(--vscode-button-secondaryHoverBackground);
+  --color-secondary-ink: var(--vscode-button-secondaryForeground);
+  --color-field: var(--vscode-input-background);
+  --color-field-line: var(--vscode-input-border, var(--color-line));
+  --color-field-ink: var(--vscode-input-foreground);
+  --color-placeholder: var(--vscode-input-placeholderForeground);
+  --color-focus: var(--vscode-focusBorder);
+  --color-selected: var(
+    --vscode-list-activeSelectionBackground,
+    var(--vscode-list-hoverBackground)
+  );
+  --color-selected-ink: var(--vscode-list-activeSelectionForeground, var(--vscode-foreground));
+  --color-badge: var(--vscode-badge-background);
+  --color-badge-ink: var(--vscode-badge-foreground);
+  --color-positive: var(--vscode-testing-iconPassed, var(--vscode-charts-green));
+  --color-negative: var(--vscode-testing-iconFailed, var(--vscode-errorForeground));
+  --color-warning: var(--vscode-editorWarning-foreground, var(--vscode-charts-orange));
+  --color-error: var(--vscode-errorForeground);
+  --font-sans: var(--vscode-font-family), system-ui, sans-serif;
+  --font-mono: var(--vscode-editor-font-family, ui-monospace), ui-monospace, monospace;
+}
+/* A 4px grid whatever the root font size, and the app's radii and type steps. */
+@theme {
+  --spacing: 4px;
+  --radius-control: 6px;
+  --radius-card: 10px;
+  --text-caption: 0.78em;
+  --text-small: 0.88em;
+  --text-title: 1.5em;
+  --text-display: 1.8em;
+}
+
+/* The names the page-specific rules below use, kept as aliases of the tokens. */
+:root {
+  --gap: 12px;
+  --radius: var(--radius-control);
+  --border: var(--color-line);
+  --card: var(--color-panel);
+  --muted: var(--color-muted);
+  --good: var(--color-positive);
+  --bad: var(--color-negative);
+  --accent: var(--color-accent);
+  --mono: var(--font-mono);
+}
+
+@layer base {
+  html {
+    @apply bg-canvas;
+  }
+  body {
+    @apply m-0 p-0 font-sans text-ink bg-canvas antialiased;
+    font-size: var(--vscode-font-size);
+    line-height: 1.45;
+  }
+  /* The editor's focus ring on everything focusable from the keyboard. */
+  :focus-visible {
+    outline: 1px solid var(--color-focus);
+    outline-offset: 1px;
+  }
+  ::selection {
+    background: var(--vscode-editor-selectionBackground, rgba(38, 79, 120, 0.6));
+  }
+  kbd {
+    @apply inline-block mx-0.5 px-1.5 rounded border border-line border-b-2 font-mono text-caption;
+    background: var(--vscode-keybindingLabel-background, transparent);
+    color: var(--vscode-keybindingLabel-foreground, inherit);
+  }
+  code,
+  pre {
+    @apply font-mono;
+  }
+}
+
+@layer components {
+  /* ── Pages and rows ──────────────────────────────────────────────────────────────────────── */
+  .page {
+    @apply flex flex-col gap-3 px-5 py-4 box-border;
+    min-height: calc(100vh - 28px);
+  }
+  .network.page {
+    @apply px-3 py-1.5 gap-1.5;
+  }
+  .toolbar,
+  .status-row,
+  .request-line,
+  .chips {
+    @apply flex flex-wrap items-center gap-2;
+  }
+  .grow {
+    @apply flex-1;
+  }
+  .muted,
+  .hint,
+  .empty {
+    @apply text-muted;
+  }
+  .hint {
+    @apply -mt-1.5 mb-0 text-small;
+  }
+  .empty {
+    @apply my-2.5 mx-0.5;
+  }
+  .error {
+    @apply m-0 text-error whitespace-pre-wrap;
+  }
+  .mono,
+  .url-box,
+  .body,
+  td {
+    @apply font-mono;
+  }
+  .strong {
+    @apply font-semibold;
+  }
+  .good-text {
+    @apply text-positive;
+  }
+  .bad-text {
+    @apply text-negative;
+  }
+  .warn-text {
+    @apply text-warning;
+  }
+  .deprecated {
+    @apply line-through text-muted;
+  }
+  .visually-hidden {
+    @apply sr-only;
+  }
+  .breadcrumb {
+    @apply flex flex-wrap items-baseline gap-1.5 min-w-0;
+  }
+  .breadcrumb .current {
+    @apply font-semibold;
+  }
+  .title {
+    @apply m-0 font-semibold;
+    font-size: 1.15em;
+  }
+
+  /* ── Buttons ─────────────────────────────────────────────────────────────────────────────── */
+  .button {
+    @apply inline-flex items-center justify-center gap-1.5 h-7 px-2.5 rounded-control
+      border border-line bg-secondary text-secondary-ink cursor-pointer whitespace-nowrap
+      leading-none select-none;
+    border-color: var(--vscode-button-border, var(--color-line));
+    font: inherit;
+  }
+  .button:hover {
+    @apply bg-secondary-hover;
+  }
+  .button.primary {
+    @apply px-4 border-transparent bg-brand text-brand-ink font-semibold;
+  }
+  .button.primary:hover {
+    @apply bg-brand-hover;
+  }
+  .button:disabled {
+    @apply opacity-60 cursor-default;
+  }
+  .button.danger {
+    @apply border-negative text-ink font-semibold;
+    background: var(--vscode-inputValidation-errorBackground, transparent);
+  }
+  .button[aria-pressed='true'] {
+    @apply border-focus text-ink;
+  }
+  .toolbar.small .button {
+    @apply h-6 px-2 text-small;
+  }
+  .icon-button {
+    @apply inline-grid place-items-center size-7 rounded-control border-0 bg-transparent
+      text-muted cursor-pointer;
+    font: inherit;
+    font-size: 1.2em;
+  }
+  .icon-button:hover {
+    @apply text-ink;
+    background: var(--vscode-toolbar-hoverBackground);
+  }
+
+  /* ── Fields ──────────────────────────────────────────────────────────────────────────────── */
+  .input,
+  .textarea,
+  select.method-box {
+    @apply box-border min-h-7 px-2 rounded-control border border-field-line bg-field
+      text-field-ink;
+    font: inherit;
+  }
+  .input,
+  select.input {
+    @apply h-7;
+  }
+  .input:focus,
+  .textarea:focus,
+  .url-box:focus,
+  select.method-box:focus {
+    @apply outline outline-1 -outline-offset-1 outline-focus;
+  }
+  .input::placeholder,
+  .textarea::placeholder,
+  .url-box::placeholder {
+    @apply text-placeholder;
+  }
+  .input[readonly],
+  .url-box[readonly],
+  .textarea[readonly] {
+    @apply opacity-85;
+  }
+  .textarea {
+    @apply w-full min-h-55 p-2 font-mono leading-normal resize-y;
+  }
+  .textarea.short {
+    @apply min-h-30;
+  }
+  .url-box {
+    @apply flex flex-1 items-center min-w-45 min-h-8 px-2.5 rounded-control border
+      border-field-line bg-field text-field-ink break-words;
+  }
+  input.url-box {
+    @apply font-mono;
+    font-size: inherit;
+  }
+  select.method-box {
+    @apply font-mono font-semibold cursor-pointer;
+  }
+  select.method-box option {
+    @apply text-ink;
+    background: var(--vscode-dropdown-background, var(--color-field));
+  }
+  .request-line .method-box {
+    @apply inline-flex items-center justify-center h-8 min-w-18 rounded-control border border-line
+      bg-field;
+  }
+  .request-line .button.primary {
+    @apply h-8;
+  }
+  .request-line.compact .method-box,
+  .request-line.compact .url-box {
+    @apply h-7;
+  }
+  .variable {
+    @apply text-accent;
+  }
+  .field {
+    @apply flex flex-col gap-1 min-w-0;
+  }
+  .field-label {
+    @apply text-caption text-muted;
+  }
+  .field.check {
+    @apply flex-row items-center gap-1.5 min-h-7;
+  }
+  .form {
+    @apply p-3 gap-2.5;
+  }
+  .form-grid {
+    @apply grid gap-x-3.5 gap-y-2.5 items-end;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+  .rows {
+    @apply flex flex-col items-start gap-1.5;
+  }
+  .row {
+    @apply grid w-full gap-1.5;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) 28px;
+  }
+  .row .input {
+    @apply font-mono min-w-0;
+  }
+  .body-wrap {
+    @apply flex flex-col gap-1.5;
+  }
+  .body-wrap > p.muted {
+    @apply m-0;
+  }
+
+  /* ── Methods and status ─────────────────────────────────────────────────────────────────── */
+  .method {
+    @apply font-mono font-semibold;
+  }
+  .method-get {
+    color: var(--vscode-charts-green);
+  }
+  .method-post {
+    color: var(--vscode-charts-orange);
+  }
+  .method-put {
+    color: var(--vscode-charts-blue);
+  }
+  .method-patch {
+    color: var(--vscode-charts-purple);
+  }
+  .method-delete {
+    color: var(--vscode-charts-red);
+  }
+  .dot {
+    @apply inline-block size-1.75 rounded-full bg-positive;
+  }
+  .pill {
+    @apply inline-flex items-center px-2.25 py-0.5 rounded-full border border-line font-semibold
+      leading-tight;
+  }
+  .pill.good {
+    @apply text-positive border-positive;
+  }
+  .pill.bad {
+    @apply text-negative border-negative;
+  }
+  .pill.warn {
+    @apply text-warning border-warning;
+  }
+  .chip {
+    @apply inline-flex items-center px-2.25 py-0.5 rounded-full border border-line text-small
+      leading-tight;
+  }
+  .count {
+    @apply ml-1.5 px-1.5 rounded-full bg-badge text-badge-ink text-caption leading-normal;
+  }
+  .dirty {
+    @apply inline-flex items-center px-2 py-px rounded-full border border-warning text-warning
+      text-caption leading-tight;
+  }
+  .dirty[hidden] {
+    @apply hidden;
+  }
+  .spinner {
+    @apply inline-block size-2.5 rounded-full border-2 border-muted border-t-transparent
+      animate-spin align-[-1px];
+  }
+
+  /* ── Cards, tabs, and tables ────────────────────────────────────────────────────────────── */
+  .split {
+    @apply flex-1 grid gap-3.5 min-h-0;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  }
+  @media (max-width: 760px) {
+    .split {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  .card {
+    @apply flex flex-col min-w-0 rounded-card border border-line bg-panel;
+  }
+  .grow-card {
+    @apply flex-1 min-h-30;
+  }
+  .card-title {
+    @apply m-0 px-3 py-2 border-b border-line text-caption font-semibold uppercase
+      tracking-wider text-muted;
+  }
+  .card-title.plain {
+    @apply p-0 border-0 normal-case tracking-normal text-ink;
+    font-size: 1em;
+  }
+  .response .status-row {
+    @apply px-3 py-2 border-b border-line;
+  }
+  .response > .error {
+    @apply px-3 py-2;
+  }
+  .tabs {
+    @apply flex flex-col flex-1 min-h-0;
+  }
+  .tablist {
+    /* One row that scrolls sideways in a narrow pane, rather than a second row of tabs. */
+    @apply flex flex-nowrap items-end gap-1.5 overflow-x-auto px-3 pt-1 border-b border-line;
+    scrollbar-width: thin;
+  }
+  .tab {
+    @apply flex-none inline-flex items-center whitespace-nowrap px-1.5 py-2 mr-1.5 border-0
+      border-b-2 border-transparent bg-transparent text-muted cursor-pointer;
+    font: inherit;
+  }
+  .tab:hover {
+    @apply text-ink;
+  }
+  .tab[aria-selected='true'] {
+    @apply text-ink;
+    border-bottom-color: var(--vscode-panelTitle-activeBorder, var(--color-accent));
+  }
+  .tabpanel {
+    @apply px-3 py-2 overflow-auto min-h-0;
+  }
+  .table-wrap {
+    @apply overflow-x-auto;
+  }
+  table {
+    @apply w-full border-collapse;
+  }
+  th {
+    @apply text-left font-semibold text-caption uppercase tracking-wide text-muted px-2 py-1;
+  }
+  td {
+    @apply px-2 py-1.25 border-t border-line align-top break-words;
+  }
+  .network td {
+    @apply px-2 py-0.75;
+  }
+  .lines {
+    @apply my-1 p-0 list-none font-mono;
+  }
+  .lines li {
+    @apply py-0.75;
+  }
+  .results .mark {
+    @apply inline-block w-[1.4em] font-bold;
+  }
+  .results .pass .mark {
+    @apply text-positive;
+  }
+  .results .fail .mark {
+    @apply text-negative;
+  }
+  .body {
+    @apply m-0 whitespace-pre-wrap break-words leading-relaxed;
+  }
+  .json-key {
+    color: var(--vscode-symbolIcon-propertyForeground, var(--color-accent));
+  }
+  .json-string {
+    color: var(--vscode-debugTokenExpression-string, var(--vscode-charts-green));
+  }
+  .json-number {
+    color: var(--vscode-debugTokenExpression-number, var(--vscode-charts-orange));
+  }
+  .json-literal {
+    color: var(--vscode-debugTokenExpression-boolean, var(--vscode-charts-blue));
+  }
+  .waterfall {
+    @apply relative block min-w-30 h-2 mt-1 rounded bg-field;
+  }
+  .waterfall .bar {
+    @apply absolute top-0 h-2 rounded bg-accent;
+  }
+  .waterfall .bar.bad {
+    @apply bg-negative;
+  }
+  /* The Timing tab: each phase a colour of VS Code's charts, as the app's waterfall. */
+  .timing-track {
+    @apply relative block h-3 rounded bg-field;
+  }
+  .timing-track .phase {
+    @apply absolute top-0 h-3 rounded-sm;
+  }
+  .phase-queueing,
+  .phase-stalled {
+    background: var(--vscode-charts-foreground, var(--color-muted));
+    opacity: 0.55;
+  }
+  .phase-dns {
+    background: var(--vscode-charts-blue, #3794ff);
+  }
+  .phase-tcp {
+    background: var(--vscode-charts-orange, #d18616);
+  }
+  .phase-tls {
+    background: var(--vscode-charts-purple, #b180d7);
+  }
+  .phase-sending {
+    background: var(--vscode-charts-yellow, #cca700);
+  }
+  .phase-waiting {
+    background: var(--vscode-charts-green, #89d185);
+  }
+  .phase-download {
+    background: var(--vscode-charts-red, #f14c4c);
+  }
+  .swatch {
+    @apply inline-block size-2.5 rounded-sm flex-none;
+  }
+  .captured {
+    @apply flex flex-col gap-1.5 mx-3 mt-1 mb-3 px-3 py-2.5 rounded-card border border-line;
+  }
+  .captured p {
+    @apply m-0;
+  }
+  .timeline {
+    @apply grid gap-x-4 gap-y-1.5 my-1;
+    grid-template-columns: max-content minmax(0, 1fr);
+  }
+  .timeline dt {
+    @apply text-muted;
+  }
+  .timeline dd {
+    @apply m-0 font-mono break-words;
+  }
+  .console li {
+    @apply whitespace-pre-wrap;
+  }
+  .console .muted {
+    @apply mr-1;
+  }
+
+  /* ── The runner's tiles ─────────────────────────────────────────────────────────────────── */
+  .tiles {
+    @apply grid gap-2;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  }
+  .tile {
+    @apply flex flex-col gap-0.5 px-2.5 py-2 rounded-card border border-line bg-panel;
+  }
+  .tile.bad {
+    @apply border-negative;
+  }
+  .tile-label {
+    @apply text-caption text-muted;
+  }
+  .tile-value {
+    @apply font-mono font-semibold;
+    font-size: 1.2em;
+  }
+  .tile.bad .tile-value {
+    @apply text-negative;
+  }
+  @media (max-width: 520px) {
+    .row {
+      grid-template-columns: minmax(0, 1fr) 28px;
+    }
+    .row .input:nth-child(2) {
+      grid-column: 1;
+    }
+    .page {
+      @apply p-2.5;
+    }
+  }
+
+  /* ── Each page's own pieces ─────────────────────────────────────────────────────────────── */
+  .textarea.short {
+    min-height: 120px;
+  }
+  .body-wrap > p.muted {
+    margin: 0;
+  }
+  .script-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .script-title {
+    margin: 0;
+    font-size: 1em;
+    font-weight: 600;
+  }
+  .script-preview {
+    max-height: 220px;
+    overflow: auto;
+    font-size: 0.92em;
+  }
+
+  /* Live connections: the composer and the log of what was sent and received. */
+  .pad {
+    padding: 10px 12px;
+  }
+  .live-log {
+    list-style: none;
+    margin: 0;
+    padding: 0 12px 12px;
+    overflow: auto;
+  }
+  .live-event {
+    border-top: 1px solid var(--border);
+    padding: 6px 0;
+  }
+  .live-meta {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    font-size: 0.92em;
+  }
+  .live-mark {
+    width: 1.2em;
+    text-align: center;
+    font-weight: 700;
+  }
+  .live-message .live-mark {
+    color: var(--good);
+  }
+  .live-sent .live-mark {
+    color: var(--accent);
+  }
+  .live-error .live-mark,
+  .live-error .live-text {
+    color: var(--bad);
+  }
+  .live-text {
+    margin: 4px 0 0 1.9em;
+    font-size: 0.92em;
+  }
+  .pill.muted {
+    color: var(--muted);
+  }
+
+  /* The Auth tab: the type and what it does, then its fields two to a row where there is room. */
+  .auth-pane {
+    gap: 10px;
+    max-width: 880px;
+  }
+  .auth-type {
+    max-width: 360px;
+  }
+  .auth-about {
+    margin: -4px 0 0;
+  }
+  .auth-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr));
+    gap: 10px 14px;
+    align-items: end;
+  }
+  .auth-grid:empty {
+    display: none;
+  }
+  .auth-grid .wide {
+    grid-column: 1 / -1;
+  }
+  .textarea.auth-multiline {
+    min-height: 96px;
+  }
+  .saved-mark {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 0 6px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 0.85em;
+    color: var(--vscode-testing-iconPassed, var(--muted));
+  }
+  .token-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--vscode-editorWidget-background, transparent);
+  }
+  .auth-note {
+    margin: 2px 0 0;
+    font-size: 0.92em;
+  }
+
+  /* A response not sent yet: what to do, in the middle of the pane. */
+  .empty-state {
+    display: grid;
+    place-items: center;
+    min-height: 160px;
+    padding: 24px;
+    text-align: center;
+  }
+  .empty-state p {
+    max-width: 320px;
+    margin: 0;
+    line-height: 1.6;
+  }
+  kbd {
+    display: inline-block;
+    margin: 0 2px;
+    padding: 0 5px;
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 0.88em;
+    background: var(--vscode-keybindingLabel-background, transparent);
+    color: var(--vscode-keybindingLabel-foreground, inherit);
+  }
+
+  /* New request: the kinds as cards, then the details, then Create. */
+  .new-request {
+    max-width: 980px;
+    margin: 0 auto;
+  }
+  .new-heading p {
+    margin: 2px 0 0;
+  }
+  .new-section {
+    padding-bottom: 12px;
+  }
+  .type-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+    gap: 8px;
+    padding: 4px 12px 0;
+  }
+  .type-card {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    column-gap: 8px;
+    row-gap: 4px;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--vscode-foreground);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .type-card:hover {
+    background: var(--vscode-list-hoverBackground);
+  }
+  .type-card[aria-checked='true'] {
+    border-color: var(--vscode-focusBorder);
+    background: var(--vscode-list-activeSelectionBackground, var(--vscode-list-hoverBackground));
+    color: var(--vscode-list-activeSelectionForeground, var(--vscode-foreground));
+    box-shadow: inset 0 0 0 1px var(--vscode-focusBorder);
+  }
+  .type-card:focus-visible {
+    outline: 1px solid var(--vscode-focusBorder);
+    outline-offset: 2px;
+  }
+  .type-label {
+    font-weight: 600;
+  }
+  .type-summary {
+    grid-column: 1 / -1;
+    font-size: 0.9em;
+    line-height: 1.4;
+    color: var(--muted);
+  }
+  .type-card[aria-checked='true'] .type-summary {
+    color: inherit;
+    opacity: 0.85;
+  }
+  .type-badge {
+    display: inline-block;
+    min-width: 34px;
+    padding: 1px 6px;
+    border: 1px solid currentColor;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 0.78em;
+    font-weight: 700;
+    text-align: center;
+  }
+  .type-http {
+    color: var(--vscode-charts-green);
+  }
+  .type-websocket,
+  .type-socketio {
+    color: var(--vscode-charts-purple);
+  }
+  .type-sse,
+  .type-ndjson {
+    color: var(--vscode-charts-blue);
+  }
+  .type-grpc {
+    color: var(--vscode-charts-orange);
+  }
+  .type-mqtt {
+    color: var(--vscode-charts-yellow, var(--vscode-charts-orange));
+  }
+  .type-about {
+    margin: 10px 12px 0;
+    padding: 8px 10px;
+    border-left: 3px solid var(--vscode-focusBorder);
+    background: var(--vscode-textBlockQuote-background, transparent);
+  }
+  .type-about p {
+    margin: 2px 0;
+    line-height: 1.5;
+  }
+  .new-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 4px 12px 0;
+  }
+  .new-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+    gap: 10px 14px;
+  }
+  .new-line .url-box {
+    flex: 1;
+    min-width: 0;
+  }
+  .line-badge {
+    align-self: center;
+    padding: 4px 8px;
+  }
+  .url-hint {
+    margin: -2px 0 0;
+  }
+  .new-footer {
+    padding: 10px 0 0;
+    border-top: 1px solid var(--border);
+  }
+
+  /* GraphQL: the query beside its variables where there is room. */
+  .type-graphql {
+    color: var(--vscode-charts-red, #e535ab);
+  }
+  .graphql {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .graphql-columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+    gap: 10px;
+  }
+  .textarea.graphql-query {
+    min-height: 240px;
+  }
+  .textarea.graphql-variables {
+    min-height: 120px;
+  }
+  .graphql-status {
+    margin: 0;
+  }
+  .graphql-errors {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--border);
+    overflow-wrap: anywhere;
+  }
+
+  /* GraphQL schema: the bar above the query, suggestions under the cursor, and the schema list. */
+  .schema-head {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .schema-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.92em;
+  }
+  .schema-bar .spinner {
+    display: inline-block;
+    vertical-align: middle;
+  }
+  .schema-error {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+  .completion-box {
+    position: relative;
+  }
+  .completion-popup {
+    position: absolute;
+    z-index: 10;
+    width: min(420px, 100%);
+    border: 1px solid var(--vscode-editorSuggestWidget-border, var(--border));
+    border-radius: var(--radius);
+    background: var(--vscode-editorSuggestWidget-background, var(--vscode-editorWidget-background));
+    color: var(--vscode-editorSuggestWidget-foreground, var(--vscode-foreground));
+    box-shadow: 0 4px 14px var(--vscode-widget-shadow, rgba(0, 0, 0, 0.35));
+    overflow: hidden;
+  }
+  .completions {
+    max-height: 220px;
+    margin: 0;
+    padding: 2px 0;
+    overflow-y: auto;
+    list-style: none;
+  }
+  .completion {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 8px;
+    font-family: var(--mono);
+    cursor: pointer;
+  }
+  .completion[aria-selected='true'] {
+    background: var(
+      --vscode-editorSuggestWidget-selectedBackground,
+      var(--vscode-list-activeSelectionBackground, rgba(128, 128, 128, 0.3))
+    );
+    outline: 1px solid var(--vscode-list-focusOutline, transparent);
+    outline-offset: -1px;
+    color: var(
+      --vscode-editorSuggestWidget-selectedForeground,
+      var(--vscode-list-activeSelectionForeground, inherit)
+    );
+  }
+  .completion-kind {
+    width: 14px;
+    font-size: 0.8em;
+    font-weight: 700;
+    text-align: center;
+    color: var(--vscode-symbolIcon-fieldForeground, var(--accent));
+  }
+  .completion-argument .completion-kind,
+  .completion-variable .completion-kind {
+    color: var(--vscode-symbolIcon-variableForeground, var(--accent));
+  }
+  .completion-type .completion-kind,
+  .completion-value .completion-kind {
+    color: var(--vscode-symbolIcon-enumeratorMemberForeground, var(--accent));
+  }
+  .completion-label {
+    flex: none;
+  }
+  .completion-detail {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: right;
+    opacity: 0.7;
+  }
+  .deprecated {
+    text-decoration: line-through;
+  }
+  .completion-about {
+    max-height: 120px;
+    padding: 6px 8px;
+    border-top: 1px solid var(--border);
+    overflow-y: auto;
+    font-size: 0.92em;
+    overflow-wrap: anywhere;
+  }
+  .completion-about p {
+    margin: 4px 0 0;
+  }
+  .schema-list summary {
+    cursor: pointer;
+    color: var(--muted);
+  }
+  .schema-list .input {
+    width: 100%;
+    margin: 6px 0;
+  }
+  .schema-rows {
+    max-height: 260px;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+  }
+  .schema-rows li {
+    padding: 4px 2px;
+    border-bottom: 1px solid var(--border);
+  }
+  .schema-row-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px;
+    overflow-wrap: anywhere;
+  }
+  .schema-rows p {
+    margin: 2px 0 0;
+    font-size: 0.92em;
+  }
+
+  /*
+   * A coloured query: the textarea's text is transparent over a layer showing the same text in
+   * colour. Both share font, padding, border, and wrapping, so every character lines up.
+   */
+  .completion-box .code-layer,
+  .completion-box .code-input {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: var(--vscode-editor-font-size, inherit);
+    line-height: 1.5;
+    tab-size: 2;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    word-break: normal;
+    letter-spacing: normal;
+    /* The same width for text in both, with or without the textarea's scrollbar. */
+    scrollbar-gutter: stable;
+  }
+  .code-layer {
+    position: absolute;
+    inset: 0;
+    box-sizing: border-box;
+    padding: 8px;
+    border: 1px solid transparent;
+    overflow: hidden;
+    pointer-events: none;
+    color: var(--vscode-input-foreground, var(--vscode-foreground));
+  }
+  .code-input {
+    position: relative;
+    display: block;
+    background: transparent;
+    color: transparent;
+    caret-color: var(--vscode-editorCursor-foreground, var(--vscode-input-foreground));
+  }
+  .completion-box {
+    border-radius: var(--radius);
+    background: var(--vscode-input-background);
+  }
+  .code-input::placeholder {
+    color: var(--vscode-input-placeholderForeground);
+  }
+  .code-input::selection {
+    color: transparent;
+    background: var(--vscode-editor-selectionBackground, rgba(38, 79, 120, 0.6));
+  }
+  .tok-keyword {
+    color: var(--vscode-symbolIcon-keywordForeground, #c586c0);
+  }
+  .tok-operation,
+  .tok-type {
+    color: var(--vscode-symbolIcon-classForeground, #4ec9b0);
+  }
+  .tok-field {
+    color: var(--vscode-symbolIcon-fieldForeground, #9cdcfe);
+  }
+  .tok-property {
+    color: var(
+      --vscode-symbolIcon-propertyForeground,
+      var(--vscode-symbolIcon-fieldForeground, #9cdcfe)
+    );
+    font-style: italic;
+  }
+  .tok-variable {
+    color: var(--vscode-symbolIcon-variableForeground, #75beff);
+  }
+  .tok-directive {
+    color: var(--vscode-symbolIcon-functionForeground, #dcdcaa);
+  }
+  .tok-string {
+    color: var(--vscode-debugTokenExpression-string, #ce9178);
+  }
+  .tok-number {
+    color: var(--vscode-debugTokenExpression-number, #b5cea8);
+  }
+  .tok-constant {
+    color: var(
+      --vscode-symbolIcon-enumeratorMemberForeground,
+      var(--vscode-debugTokenExpression-boolean, #4fc1ff)
+    );
+  }
+  .tok-comment {
+    color: var(--vscode-descriptionForeground);
+    font-style: italic;
+  }
+  .tok-punctuation {
+    color: var(--vscode-foreground);
+    opacity: 0.75;
+  }
+
+  /* ── The request page ────────────────────────────────────────────────────────────────────── */
+
+  .request-page {
+    gap: 10px;
+  }
+  .button.ghost {
+    border-color: transparent;
+    background: transparent;
+    color: var(--vscode-foreground);
+  }
+  .button.ghost:hover {
+    background: var(--vscode-toolbar-hoverBackground, var(--vscode-list-hoverBackground));
+  }
+
+  /* Where it is, and its actions. */
+  .req-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 26px;
+    font-size: 0.92em;
+  }
+  .req-head .breadcrumb {
+    gap: 4px;
+    color: var(--muted);
+  }
+  .crumb {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 220px;
+  }
+  .crumb-sep {
+    opacity: 0.6;
+  }
+  .req-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+  }
+
+  /* Its name and kind. */
+  .req-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+  .method-badge {
+    padding: 2px 8px;
+    border: 1px solid currentColor;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 0.82em;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .req-name {
+    margin: 0;
+    min-width: 0;
+    font-size: 1.3em;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+  .req-title .dirty {
+    font-size: 0.85em;
+  }
+  .env-chip {
+    border-radius: 999px;
+  }
+  .dot.off {
+    background: var(--muted);
+    opacity: 0.6;
+  }
+
+  /* The address bar: method, URL, and Send as one control. */
+  .address-bar {
+    flex-wrap: nowrap;
+    gap: 0;
+    border: 1px solid var(--vscode-input-border, var(--border));
+    border-radius: var(--radius);
+    background: var(--vscode-input-background);
+  }
+  .address-bar:focus-within {
+    border-color: var(--vscode-focusBorder);
+    box-shadow: 0 0 0 1px var(--vscode-focusBorder);
+  }
+  .address-bar .method-box {
+    height: 36px;
+    min-width: 92px;
+    padding: 0 10px;
+    border: 0;
+    border-right: 1px solid var(--border);
+    border-radius: var(--radius) 0 0 var(--radius);
+    background: transparent;
+  }
+  .address-bar select.method-box:focus {
+    outline: none;
+    background: var(--vscode-list-hoverBackground);
+  }
+  .address-bar .button.send {
+    height: 36px;
+    min-width: 92px;
+    justify-content: center;
+    border-radius: 0 var(--radius) var(--radius) 0;
+  }
+  .url-field {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+  }
+  .url-field .url-box {
+    width: 100%;
+    min-height: 36px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+  .url-field .url-box:focus {
+    outline: none;
+  }
+  .url-layer,
+  .code-input-line {
+    font-family: var(--mono);
+    font-size: var(--vscode-editor-font-size, inherit);
+    letter-spacing: normal;
+  }
+  .url-layer {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    overflow: hidden;
+    white-space: pre;
+    pointer-events: none;
+    color: var(--vscode-input-foreground);
+  }
+  .code-input-line {
+    position: relative;
+    color: transparent !important;
+    caret-color: var(--vscode-editorCursor-foreground, var(--vscode-input-foreground));
+  }
+  .code-input-line::selection {
+    color: transparent;
+    background: var(--vscode-editor-selectionBackground, rgba(38, 79, 120, 0.6));
+  }
+  .code-input-line::placeholder {
+    color: var(--vscode-input-placeholderForeground);
+  }
+  .url-scheme {
+    color: var(--muted);
+  }
+  .url-host {
+    color: var(--vscode-input-foreground);
+  }
+  .url-path {
+    color: var(--vscode-input-foreground);
+    opacity: 0.85;
+  }
+  .url-punctuation {
+    color: var(--muted);
+  }
+  .url-key {
+    color: var(
+      --vscode-symbolIcon-propertyForeground,
+      var(--vscode-symbolIcon-fieldForeground, #9cdcfe)
+    );
+  }
+  .url-value {
+    color: var(--vscode-debugTokenExpression-string, #ce9178);
+  }
+  .url-variable {
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    border-radius: 3px;
+  }
+
+  /* What the send uses, and the keys. */
+  .req-strip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 12px;
+    margin-top: -4px;
+    font-size: 0.88em;
+    color: var(--muted);
+  }
+  .strip-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .strip-sep {
+    opacity: 0.6;
+  }
+  .strip-keys {
+    display: flex;
+    gap: 12px;
+  }
+  .strip-key kbd {
+    margin: 0 1px;
+  }
+
+  /* Request and response, with a divider to resize them. */
+  .request-page .split {
+    gap: 0;
+    grid-template-columns: minmax(0, var(--share, 45%)) 10px minmax(0, 1fr);
+  }
+  .request-page .split.stacked {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(140px, var(--share, 45%)) 10px minmax(160px, 1fr);
+  }
+  .request-page .split > .card {
+    min-height: 0;
+    overflow: hidden;
+  }
+  .request-page .split > .card .tabpanel {
+    overflow: auto;
+  }
+  .splitter {
+    position: relative;
+    cursor: col-resize;
+    touch-action: none;
+  }
+  .splitter::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    bottom: 8px;
+    left: 4px;
+    width: 2px;
+    border-radius: 2px;
+    background: transparent;
+    transition: background 0.12s;
+  }
+  .split.stacked .splitter {
+    cursor: row-resize;
+  }
+  .split.stacked .splitter::after {
+    inset: 4px 8px auto;
+    width: auto;
+    height: 2px;
+  }
+  .splitter:hover::after,
+  .splitter.dragging::after,
+  .splitter:focus-visible::after {
+    background: var(--vscode-sash-hoverBorder, var(--vscode-focusBorder));
+  }
+  .splitter:focus-visible {
+    outline: none;
+  }
+  @media (max-width: 760px) {
+    .request-page .split,
+    .request-page .split.stacked {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: none;
+      gap: 12px;
+    }
+    .splitter {
+      display: none;
+    }
+    .req-strip .strip-keys {
+      display: none;
+    }
+  }
+
+  /* Names and values. */
+  .kv {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .kv-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.92em;
+  }
+  .kv-table {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .kv-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) 30px;
+    align-items: center;
+    border-top: 1px solid var(--border);
+  }
+  .kv-table.toggles .kv-row {
+    grid-template-columns: 36px minmax(0, 1fr) minmax(0, 1.4fr) 30px;
+  }
+  .kv-row:first-child {
+    border-top: 0;
+  }
+  .kv-row:not(.kv-head):hover {
+    background: var(--vscode-list-hoverBackground);
+  }
+  .kv-head {
+    font-size: 0.8em;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--vscode-editorWidget-background, transparent);
+  }
+  .kv-head > span {
+    padding: 5px 9px;
+  }
+  .kv-cell {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    border-left: 1px solid var(--border);
+  }
+  .kv-cell:first-child {
+    border-left: 0;
+    justify-content: center;
+  }
+  .kv-table:not(.toggles) .kv-cell:first-child {
+    justify-content: stretch;
+  }
+  .kv-cell .input {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    font-family: var(--mono);
+  }
+  /* A form field's Text or File choice, beside its value. */
+  .kv-cell .kv-kind {
+    width: 5.5rem;
+    flex: none;
+    border-right: 1px solid var(--color-line);
+  }
+  .kv-file {
+    @apply flex items-center gap-2 min-w-0 w-full;
+  }
+  .kv-file .button {
+    @apply min-w-0 max-w-full truncate;
+  }
+  .kv-cell .input:focus {
+    outline: 1px solid var(--vscode-focusBorder);
+    outline-offset: -1px;
+  }
+  .kv-row.off .input {
+    opacity: 0.5;
+    text-decoration: line-through;
+  }
+  .kv-cell .icon-button {
+    margin: 0 auto;
+    opacity: 0.5;
+  }
+  .kv-row:hover .icon-button,
+  .kv-cell .icon-button:focus-visible {
+    opacity: 1;
+  }
+  .secret-mark {
+    position: absolute;
+    right: 6px;
+    padding: 0 6px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 0.78em;
+    color: var(--muted);
+    pointer-events: none;
+  }
+  .add-row {
+    align-self: flex-start;
+    color: var(--accent);
+  }
+  .textarea.kv-bulk {
+    min-height: 160px;
+  }
+
+  /* The response's figures. */
+  .stat {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    padding: 1px 8px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 0.9em;
+  }
+  .stat-label {
+    font-size: 0.85em;
+    color: var(--muted);
+  }
+  .stat-value {
+    font-family: var(--mono);
+  }
+  /* The method keeps its colour in the address bar. */
+  select.method-box.method-get {
+    color: var(--vscode-charts-green);
+  }
+  select.method-box.method-post {
+    color: var(--vscode-charts-orange);
+  }
+  select.method-box.method-put {
+    color: var(--vscode-charts-blue);
+  }
+  select.method-box.method-patch {
+    color: var(--vscode-charts-purple);
+  }
+  select.method-box.method-delete {
+    color: var(--vscode-charts-red);
+  }
+  /* Each side scrolls within its own space, so a short side shows all it has. */
+  .request-page .split > .card {
+    display: flex;
+    flex-direction: column;
+  }
+  .request-page .split > .card > .tabs {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .request-page .split > .card .tabpanel {
+    flex: 1;
+    min-height: 0;
+  }
+  .secret-cell .input::placeholder {
+    font-style: italic;
+  }
+  /* The page fills the window, as an editor does; the request and response scroll on their own. */
+  .request-page {
+    height: 100vh;
+    min-height: 0;
+  }
+  .request-page .split {
+    flex: 1;
+    min-height: 0;
+  }
+  @media (max-width: 760px) {
+    .request-page {
+      height: auto;
+      min-height: calc(100vh - 28px);
+    }
+    .request-page .split > .card {
+      overflow: visible;
+    }
+  }
+
+  /* ── The mock server page ─────────────────────────────────────────────────────────────── */
+
+  .mock-page {
+    gap: 10px;
+  }
+  .run-state {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 10px 2px 8px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .run-state::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--muted);
+  }
+  .run-state.on {
+    color: var(--good);
+    border-color: color-mix(in srgb, var(--good) 45%, transparent);
+  }
+  .run-state.on::before {
+    background: var(--good);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--good) 25%, transparent);
+  }
+  .mock-address {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--vscode-input-background);
+  }
+  .banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border: 1px solid var(--vscode-inputValidation-infoBorder, var(--vscode-focusBorder));
+    border-radius: var(--radius);
+    background: var(--vscode-inputValidation-infoBackground, transparent);
+  }
+  .mock-page .grow-card .tabpanel {
+    padding: 10px 12px 14px;
+  }
+  .kv-table.mock-routes .kv-row {
+    grid-template-columns: 36px 84px minmax(0, 1.6fr) 88px 104px minmax(0, 1.4fr);
+  }
+  .kv-text {
+    padding: 0 9px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .mock-routes .kv-cell:nth-child(2) {
+    justify-content: flex-start;
+  }
+  .number-input {
+    max-width: 160px;
+  }
+  .settings {
+    display: flex;
+    flex-direction: column;
+  }
+  .settings-section {
+    display: grid;
+    grid-template-columns: minmax(180px, 260px) minmax(0, 1fr);
+    gap: 16px 28px;
+    padding: 16px 0;
+    border-top: 1px solid var(--border);
+  }
+  .settings-section:first-child {
+    border-top: 0;
+    padding-top: 4px;
+  }
+  .settings-heading {
+    margin: 0 0 4px;
+    font-size: 1em;
+    font-weight: 600;
+  }
+  .settings-intro p {
+    margin: 0;
+    font-size: 0.92em;
+    line-height: 1.5;
+  }
+  .settings-body,
+  .settings-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+  }
+  .settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+    gap: 10px 14px;
+  }
+  @media (max-width: 760px) {
+    .settings-section {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 8px;
+    }
+    .kv-table.mock-routes .kv-row {
+      grid-template-columns: 36px 70px minmax(0, 1fr) 76px 84px;
+    }
+    .kv-table.mock-routes .kv-cell:last-child,
+    .kv-table.mock-routes .kv-head > span:last-child {
+      display: none;
+    }
+  }
+  .kv .hint {
+    margin-top: 2px;
+  }
+
+  /* ── Live requests: the same page, with a connection instead of a send ──────────────────── */
+
+  .protocol-websocket,
+  .protocol-socketio {
+    color: var(--vscode-charts-purple);
+  }
+  .protocol-sse,
+  .protocol-ndjson {
+    color: var(--vscode-charts-blue);
+  }
+  .protocol-grpc {
+    color: var(--vscode-charts-orange);
+  }
+  .protocol-mqtt {
+    color: var(--vscode-charts-yellow, var(--vscode-charts-orange));
+  }
+  .address-bar span.method-box {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 0.9em;
+  }
+  .run-state.busy {
+    color: var(--vscode-charts-yellow, var(--accent));
+  }
+  .run-state.busy::before {
+    background: currentColor;
+    animation: pulse 1s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    50% {
+      opacity: 0.3;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .run-state.busy::before {
+      animation: none;
+    }
+  }
+  .button.danger-solid {
+    background: var(--vscode-statusBarItem-errorBackground, var(--vscode-errorForeground, #c72e2e));
+    color: var(--vscode-statusBarItem-errorForeground, #fff);
+    border-color: transparent;
+    font-weight: 600;
+  }
+  .live-messages {
+    display: flex;
+    flex-direction: column;
+  }
+  .live-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .live-counts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  .live-head .compact-select {
+    flex: none;
+    width: auto;
+    min-height: 26px;
+  }
+  .live-head .live-search {
+    flex: 0 1 150px;
+    min-width: 90px;
+    min-height: 26px;
+  }
+  .live-body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+  }
+  .live-size {
+    font-family: var(--mono);
+    font-size: 0.85em;
+  }
+  .live-page .live-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Adding a route to a mock. */
+  .add-route-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .add-route {
+    display: grid;
+    grid-template-columns: auto 100px minmax(0, 2fr) 84px minmax(0, 1.4fr) auto;
+    align-items: center;
+    gap: 6px;
+    padding: 8px;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+  }
+  .add-route-title {
+    font-size: 0.9em;
+    color: var(--muted);
+    padding-right: 4px;
+  }
+  .add-route .input {
+    min-width: 0;
+    font-family: var(--mono);
+  }
+  .add-route-problem {
+    margin: 0;
+  }
+  .new-tag {
+    padding: 0 6px;
+    border-radius: 999px;
+    font-size: 0.75em;
+    font-weight: 700;
+    color: var(--vscode-badge-foreground);
+    background: var(--vscode-badge-background, var(--accent));
+  }
+  .kv-row.new-route {
+    background: color-mix(in srgb, var(--accent) 7%, transparent);
+  }
+  .new-notes {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  @media (max-width: 760px) {
+    .add-route {
+      grid-template-columns: 90px minmax(0, 1fr) 72px;
+    }
+    .add-route-title {
+      grid-column: 1 / -1;
+    }
+  }
+
+  /* ── The mock server page, laid out as the app's ───────────────────────────────────────── */
+
+  .mock-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+  .mock-icon {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 1.3em;
+    color: var(--muted);
+    background: var(--vscode-editorWidget-background, transparent);
+  }
+  .mock-icon.on {
+    color: var(--good);
+    border-color: color-mix(in srgb, var(--good) 45%, transparent);
+  }
+  .mock-titles {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .mock-title-line,
+  .mock-meta,
+  .mock-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  .mock-meta {
+    font-size: 0.92em;
+  }
+  .mock-endpoints {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 14px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--vscode-input-background);
+  }
+  .mock-endpoint {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .endpoint-label {
+    padding: 0 6px;
+    border-radius: 4px;
+    font-size: 0.78em;
+    font-weight: 700;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .mock-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+    margin: 0;
+  }
+  .mock-stat {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--card);
+  }
+  .mock-stat dt {
+    font-size: 0.78em;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .mock-stat dd {
+    margin: 2px 0 0;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .mock-routes {
+    display: grid;
+    grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
+    gap: 14px;
+    min-height: 360px;
+  }
+  .route-side {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    padding-right: 14px;
+    border-right: 1px solid var(--border);
+  }
+  .route-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: auto;
+  }
+  .route-item {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    column-gap: 6px;
+    align-items: center;
+    padding: 6px 8px;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--vscode-foreground);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .route-item:hover {
+    background: var(--vscode-list-hoverBackground);
+  }
+  .route-item[aria-selected='true'] {
+    background: var(--vscode-list-activeSelectionBackground, var(--vscode-list-hoverBackground));
+    color: var(--vscode-list-activeSelectionForeground, var(--vscode-foreground));
+    border-color: var(--vscode-focusBorder);
+  }
+  .route-item:focus-visible {
+    outline: 1px solid var(--vscode-focusBorder);
+  }
+  .route-item.off {
+    opacity: 0.6;
+  }
+  .route-method {
+    font-size: 0.78em;
+  }
+  .route-path {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .route-status {
+    font-family: var(--mono);
+    font-size: 0.85em;
+  }
+  .route-name {
+    grid-column: 2 / -1;
+    font-size: 0.85em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .route-off {
+    grid-column: 3;
+    font-size: 0.75em;
+    color: var(--muted);
+  }
+  .route-editor {
+    min-width: 0;
+  }
+  .route-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .route-origin .origin-text {
+    align-self: center;
+    padding-left: 10px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .route-origin .url-box {
+    padding-left: 0;
+  }
+  .textarea.route-body {
+    min-height: 160px;
+  }
+  .route-notes {
+    margin: 0;
+  }
+  .route-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+  @media (max-width: 760px) {
+    .mock-routes {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .route-side {
+      padding-right: 0;
+      border-right: 0;
+    }
+    .route-list {
+      max-height: 220px;
+    }
+  }
+
+  /* ── Credentials, laid out as the app's ───────────────────────────────────────────────── */
+
+  .page-titles {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .page-titles p {
+    margin: 0;
+  }
+  .req-name.page-name {
+    font-size: 1.7em;
+    letter-spacing: -0.01em;
+  }
+  .summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .summary-card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--card);
+  }
+  .summary-label {
+    font-size: 0.9em;
+    color: var(--muted);
+  }
+  .summary-value {
+    font-size: 1.8em;
+    line-height: 1.2;
+  }
+  .credentials-card {
+    overflow: hidden;
+  }
+  .credential-tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .kind-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 3px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .kind-chip {
+    padding: 3px 10px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.92em;
+    cursor: pointer;
+  }
+  .kind-chip:hover {
+    color: var(--vscode-foreground);
+  }
+  .kind-chip[aria-checked='true'] {
+    background: var(--vscode-list-activeSelectionBackground, var(--vscode-list-hoverBackground));
+    color: var(--vscode-list-activeSelectionForeground, var(--vscode-foreground));
+  }
+  .kind-chip:focus-visible {
+    outline: 1px solid var(--vscode-focusBorder);
+  }
+  .credential-search {
+    width: 220px;
+    max-width: 100%;
+  }
+  .credential-table {
+    display: flex;
+    flex-direction: column;
+  }
+  .credential-row {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1.6fr) minmax(0, 0.9fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-top: 1px solid var(--border);
+  }
+  .credential-row:not(.credential-head):hover {
+    background: var(--vscode-list-hoverBackground);
+  }
+  .credential-head {
+    border-top: 0;
+    font-size: 0.78em;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .credential-cell {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .credential-who {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .credential-mark {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.72em;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--vscode-editorWidget-background, transparent);
+  }
+  .credential-names {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .credential-names strong,
+  .credential-names span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .credential-names span {
+    font-size: 0.88em;
+  }
+  .status-pill {
+    padding: 1px 8px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 0.85em;
+  }
+  .status-pill.good {
+    color: var(--good);
+  }
+  .status-pill.warn {
+    color: var(--vscode-editorWarning-foreground, var(--vscode-charts-orange));
+  }
+  .status-pill.muted {
+    color: var(--muted);
+  }
+  .credential-actions {
+    display: flex;
+    gap: 2px;
+  }
+  .button.ghost.danger-text {
+    color: var(--vscode-errorForeground);
+  }
+  .credential-form {
+    padding: 14px 16px;
+    gap: 10px;
+    border-color: var(--vscode-focusBorder);
+  }
+  .credential-fields .wide {
+    grid-column: 1 / -1;
+  }
+  .credentials-foot {
+    text-align: center;
+  }
+  @media (max-width: 760px) {
+    .credential-row {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+    .credential-row > :nth-child(2),
+    .credential-row > :nth-child(3) {
+      display: none;
+    }
+  }
+
+  /* ── Closer to the app's layout: uppercase trail, larger titles, the URL bar as a card ─────── */
+
+  .req-head .breadcrumb {
+    font-size: 0.78em;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .req-name {
+    font-size: 1.5em;
+    letter-spacing: -0.01em;
+  }
+  .tag-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: -4px;
+  }
+  .tag-chip {
+    padding: 1px 8px;
+    border: 1px dashed var(--border);
+    border-radius: 999px;
+    font-size: 0.85em;
+    color: var(--muted);
+  }
+  .url-card {
+    border: 1px solid var(--vscode-input-border, var(--border));
+    border-radius: 10px;
+    background: var(--card);
+    overflow: hidden;
+  }
+  .url-card:focus-within {
+    border-color: var(--vscode-focusBorder);
+  }
+  .url-card .address-bar {
+    margin: 10px 10px 0;
+  }
+  .url-card .address-bar:focus-within {
+    box-shadow: none;
+  }
+  .url-card .req-strip {
+    margin: 0;
+    padding: 7px 12px;
+    border-top: 1px solid var(--border);
+    margin-top: 10px;
+    background: var(--vscode-editorWidget-background, transparent);
+  }
+  .response-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+  }
+  .dot.bad {
+    background: var(--bad);
+  }
+  .response .status-row {
+    padding: 8px 12px;
+  }
+  .tablist {
+    padding: 4px 12px 0;
+    gap: 6px;
+  }
+  .tab {
+    padding: 8px 6px;
+    margin-right: 6px;
+  }
+  /* A mock made from a collection: whether the two are in step. */
+  .sync-state {
+    font-size: 0.92em;
+    color: var(--good);
+  }
+  .sync-state.warn {
+    color: var(--vscode-editorWarning-foreground, var(--vscode-charts-orange));
+  }
+  .button.ghost.sync-now {
+    min-height: 22px;
+    padding: 0 8px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+  }
+}
+
+@layer components {
+  /* A secret-looking variable: its value typed unseen, with Show to reveal it. */
+  .kv-cell .reveal {
+    @apply absolute right-1 h-6 px-2 text-caption;
+  }
+  .kv-cell.masked .input {
+    padding-right: 60px;
+  }
+  .kv-cell.masked .secret-mark {
+    right: 60px;
+  }
+}

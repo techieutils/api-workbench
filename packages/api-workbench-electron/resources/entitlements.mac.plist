@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Hardened runtime entitlements for the signed macOS app, its helpers, and its native modules.
+  The app is distributed outside the Mac App Store, so it does not use the App Sandbox; this only
+  relaxes the hardened runtime where Electron needs it. Notarization requires the hardened runtime.
+  Library validation stays on: node-pty and every other native module are signed with the app's own
+  identity, so macOS loads them, and refuses code signed by anyone else. Executable memory without
+  MAP_JIT is not allowed either; V8 and WebAssembly use MAP_JIT, which allow-jit covers.
+-->
+<plist version="1.0">
+  <dict>
+    <!-- V8 compiles JavaScript to machine code at run time. -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+  </dict>
+</plist>

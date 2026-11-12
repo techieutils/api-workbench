@@ -1,0 +1,90 @@
+# Dependencies (the root, each package, and the examples)
+node_modules/
+
+# Build output
+/dist
+/dist-spec
+/packages/*/dist
+/packages/*/dist-spec
+/out-tsc
+*.tsbuildinfo
+# Vite's temporary bundle of its config file
+*.timestamp-*.mjs
+
+# Packaged apps and installers (electron-builder), and npm package tarballs (npm pack; the
+# command line's package itself is built in packages/api-workbench-cli/dist/npm, ignored above)
+/release
+*.tgz
+
+# Test output: UI smoke screenshots, coverage (Vitest writes it in the package it runs in),
+# and Playwright's results, HTML report, merged-shard reports, and cache
+/artifacts
+coverage/
+/test-results
+/playwright-report
+/blob-report
+/playwright/.cache
+/tmp
+
+# Caches and diagnostics
+.eslintcache
+.cache/
+*.cpuprofile
+*.heapsnapshot
+gitleaks-report.*
+
+# Logs (including npm-debug.log*)
+*.log
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+# npm configuration often holds a registry token (GitHub Packages needs one even to install). The
+# project needs none; if one ever does, commit it with `git add -f`, taking the token from an
+# environment variable (`_authToken=${GITHUB_TOKEN}`), never the token itself.
+.npmrc
+# electron-builder reads signing variables from this file; signing reads them from CI secrets.
+electron-builder.env
+# Code-signing certificates, keys, and provisioning profiles. Signing reads them from CI secrets;
+# never commit one. Test certificates are generated at run time, not stored.
+*.p12
+*.pfx
+*.p8
+*.pem
+*.key
+*.jks
+*.keystore
+*.keychain
+*.keychain-db
+*.provisionprofile
+*.mobileprovision
+
+# Editors and agents. .idea is ignored apart from the project files already in git; shared VS Code
+# settings may be committed. Claude Code keeps local settings and its git worktrees under .claude/.
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+.idea/*
+.codex
+.claude/settings.local.json
+.claude/worktrees/
+*.swp
+*~
+
+# Operating systems
+.DS_Store
+._*
+.AppleDouble
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.directory
+.Trash-*
+
+# Inputs the fuzzer saved (npm run test:fuzz)
+fuzz-findings/

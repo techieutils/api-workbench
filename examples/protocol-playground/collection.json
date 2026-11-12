@@ -1,0 +1,234 @@
+{
+  "requests": [
+    {
+      "name": "Health and available protocols",
+      "method": "GET",
+      "url": "http://127.0.0.1:4780/health",
+      "folder": "Local playground",
+      "params": [],
+      "headers": [],
+      "body": "",
+      "auth": "None",
+      "token": "",
+      "username": "",
+      "password": "",
+      "tests": "status 200\njson-valid\njson $.ok equals true"
+    },
+    {
+      "name": "GET query echo",
+      "method": "GET",
+      "url": "http://127.0.0.1:4780/echo?name=Workbench&limit=10",
+      "folder": "Local playground",
+      "params": [],
+      "headers": [],
+      "body": "",
+      "auth": "None",
+      "token": "",
+      "username": "",
+      "password": "",
+      "tests": "status 200\njson-valid\njson $.method equals \"GET\""
+    },
+    {
+      "name": "POST JSON echo",
+      "method": "POST",
+      "url": "http://127.0.0.1:4780/echo",
+      "folder": "Local playground",
+      "params": [],
+      "headers": [
+        {
+          "enabled": true,
+          "key": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": "{\n  \"message\": \"Hello from Workbench\",\n  \"count\": 3\n}",
+      "auth": "None",
+      "token": "",
+      "username": "",
+      "password": "",
+      "tests": "status 200\nresponse-time < 3000",
+      "bodyType": "raw",
+      "rawContentType": "application/json"
+    },
+    {
+      "name": "GraphQL query with variables",
+      "method": "POST",
+      "url": "http://127.0.0.1:4780/graphql",
+      "folder": "Local playground",
+      "params": [],
+      "headers": [
+        {
+          "enabled": true,
+          "key": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": "{\n  \"query\": \"query Hello($name: String) { hello(name: $name) protocol }\",\n  \"variables\": {\n    \"name\": \"Workbench\"\n  }\n}",
+      "auth": "None",
+      "token": "",
+      "username": "",
+      "password": "",
+      "tests": "status 200\nresponse-time < 3000",
+      "bodyType": "raw",
+      "rawContentType": "application/json"
+    },
+    {
+      "name": "URL-encoded form",
+      "method": "POST",
+      "url": "http://127.0.0.1:4780/echo",
+      "folder": "Local playground",
+      "params": [],
+      "headers": [],
+      "body": "",
+      "auth": "None",
+      "token": "",
+      "username": "",
+      "password": "",
+      "tests": "status 200\nresponse-time < 3000",
+      "bodyType": "x-www-form-urlencoded",
+      "bodyFields": [
+        {
+          "enabled": true,
+          "key": "name",
+          "value": "Workbench",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "name": "Multipart text fields",
+      "method": "POST",
+      "url": "http://127.0.0.1:4780/echo",
+      "folder": "Local playground",
+      "params": [],
+      "headers": [],
+      "body": "",
+      "auth": "None",
+      "token": "",
+      "username": "",
+      "password": "",
+      "tests": "status 200\nresponse-time < 3000",
+      "bodyType": "form-data",
+      "bodyFields": [
+        {
+          "enabled": true,
+          "key": "message",
+          "value": "Hello from multipart",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "name": "Bearer token accepted",
+      "method": "GET",
+      "url": "http://127.0.0.1:4780/auth/bearer",
+      "folder": "Local playground",
+      "params": [],
+      "headers": [],
+      "body": "",
+      "auth": "Bearer token",
+      "token": "sample-token",
+      "username": "",
+      "password": "",
+      "tests": "status 200\nresponse-time < 3000"
+    },
+    {
+      "name": "Bearer token missing (expected 401)",
+      "method": "GET",
+      "url": "http://127.0.0.1:4780/auth/bearer",
+      "folder": "Local playground",
+      "params": [],
+      "headers": [],
+      "body": "",
+      "auth": "None",
+      "token": "",
+      "username": "",
+      "password": "",
+      "tests": "status 401\njson-valid"
+    },
+    {
+      "name": "Follow redirect",
+      "method": "GET",
+      "url": "http://127.0.0.1:4780/redirect",
+      "folder": "Local playground",
+      "params": [],
+      "headers": [],
+      "body": "",
+      "auth": "None",
+      "token": "",
+      "username": "",
+      "password": "",
+      "tests": "status 200\njson-valid"
+    },
+    {
+      "name": "Gzip response",
+      "method": "GET",
+      "url": "http://127.0.0.1:4780/gzip",
+      "folder": "Local playground",
+      "params": [],
+      "headers": [],
+      "body": "",
+      "auth": "None",
+      "token": "",
+      "username": "",
+      "password": "",
+      "tests": "status 200\njson-valid\njson $.compressed equals true"
+    },
+    {
+      "name": "HTTP error (expected 418)",
+      "method": "GET",
+      "url": "http://127.0.0.1:4780/status/418",
+      "folder": "Local playground",
+      "params": [],
+      "headers": [],
+      "body": "",
+      "auth": "None",
+      "token": "",
+      "username": "",
+      "password": "",
+      "tests": "status 418\njson-valid"
+    },
+    {
+      "name": "Delayed response (500 ms)",
+      "method": "GET",
+      "url": "http://127.0.0.1:4780/delay?ms=500",
+      "folder": "Local playground",
+      "params": [],
+      "headers": [],
+      "body": "",
+      "auth": "None",
+      "token": "",
+      "username": "",
+      "password": "",
+      "tests": "status 200\nresponse-time >= 450\nresponse-time < 3000"
+    },
+    {
+      "name": "Finite SSE stream (buffered)",
+      "method": "GET",
+      "url": "http://127.0.0.1:4780/events?count=3&interval=100",
+      "folder": "Local playground",
+      "params": [],
+      "headers": [],
+      "body": "",
+      "auth": "None",
+      "token": "",
+      "username": "",
+      "password": "",
+      "tests": "status 200\ncontent-type text/event-stream\nbody-contains Sample event 3"
+    },
+    {
+      "name": "Finite NDJSON stream (buffered)",
+      "method": "GET",
+      "url": "http://127.0.0.1:4780/ndjson?count=3&interval=100",
+      "folder": "Local playground",
+      "params": [],
+      "headers": [],
+      "body": "",
+      "auth": "None",
+      "token": "",
+      "username": "",
+      "password": "",
+      "tests": "status 200\ncontent-type application/x-ndjson\nbody-contains Sample event 3"
+    }
+  ]
+}

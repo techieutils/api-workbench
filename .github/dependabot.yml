@@ -1,0 +1,29 @@
+# Weekly pull requests that keep dependencies and workflow actions current. Each one runs CI,
+# including the dependency audit and both type-checkers, before it can merge.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    groups:
+      # One pull request for routine updates; security fixes still arrive on their own.
+      minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      # Pinned on purpose; see Dependencies in CONTRIBUTING.md.
+      - dependency-name: vue-tsc
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
+    labels: [dependencies]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns: ['*']
+    labels: [dependencies]

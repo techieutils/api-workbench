@@ -1,0 +1,60 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "HTTP",
+  "scopeName": "source.http.api-workbench",
+  "patterns": [
+    { "include": "#separator" },
+    { "include": "#comment" },
+    { "include": "#fileVariable" },
+    { "include": "#requestLine" },
+    { "include": "#header" },
+    { "include": "#template" }
+  ],
+  "repository": {
+    "separator": {
+      "match": "^\\s*(###)(.*)$",
+      "captures": {
+        "1": { "name": "punctuation.separator.http" },
+        "2": { "name": "entity.name.section.http" }
+      }
+    },
+    "comment": {
+      "match": "^\\s*(#|//).*$",
+      "name": "comment.line.http"
+    },
+    "fileVariable": {
+      "match": "^(@)([\\w.-]+)\\s*(=)\\s*(.*)$",
+      "captures": {
+        "1": { "name": "punctuation.definition.variable.http" },
+        "2": { "name": "variable.other.http" },
+        "3": { "name": "keyword.operator.assignment.http" },
+        "4": {
+          "patterns": [
+            { "include": "#template" },
+            { "match": ".+", "name": "string.unquoted.http" }
+          ]
+        }
+      }
+    },
+    "requestLine": {
+      "match": "^\\s*(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|TRACE|CONNECT)\\s+(\\S+)(\\s+HTTP/\\S+)?\\s*$",
+      "captures": {
+        "1": { "name": "keyword.control.http" },
+        "2": { "name": "string.unquoted.url.http", "patterns": [{ "include": "#template" }] },
+        "3": { "name": "constant.language.http" }
+      }
+    },
+    "header": {
+      "match": "^([\\w-]+)(:)\\s*(.*)$",
+      "captures": {
+        "1": { "name": "support.type.property-name.http" },
+        "2": { "name": "punctuation.separator.key-value.http" },
+        "3": { "name": "string.unquoted.http", "patterns": [{ "include": "#template" }] }
+      }
+    },
+    "template": {
+      "match": "\\{\\{[^{}]*\\}\\}",
+      "name": "variable.other.template.http"
+    }
+  }
+}

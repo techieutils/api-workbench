@@ -1,0 +1,30 @@
+{
+  "name": "@techieutils/api-workbench-cli",
+  "version": "1.0.0",
+  "description": "Run API Workbench collections from the command line and in CI pipelines.",
+  "license": "MIT",
+  "private": true,
+  "bin": {
+    "api-workbench": "dist/cli.js"
+  },
+  "engines": {
+    "node": ">=22.19"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "node ../../node_modules/typescript-build/bin/tsc -p tsconfig.json",
+    "bundle": "npm run build && node scripts/bundle.mjs",
+    "typecheck": "node ../../node_modules/typescript-build/bin/tsc -p tsconfig.spec.json --noEmit",
+    "test": "npm --prefix ../api-workbench-common run build && npm --prefix ../api-workbench-electron run build && node ../../node_modules/typescript-build/bin/tsc -p tsconfig.spec.json && node --test \"dist-spec/**/*.spec.js\"",
+    "lint": "eslint src --max-warnings=0",
+    "format": "prettier --write \"src/**/*.ts\" \"scripts/*.mjs\" \"*.json\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"scripts/*.mjs\" \"*.json\"",
+    "clean": "node -e \"for (const d of ['dist', 'dist-spec']) require('fs').rmSync(d, { recursive: true, force: true })\""
+  },
+  "dependencies": {
+    "@techieutils/api-workbench-common": "1.0.0",
+    "@techieutils/api-workbench-electron": "1.0.0"
+  }
+}
