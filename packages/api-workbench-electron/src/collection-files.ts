@@ -324,6 +324,13 @@ export const writeCollectionFile = (root: string, file: string, content: string,
  * files the app wrote before that are no longer wanted, and directories left empty. Files the
  * app did not write are never touched.
  */
+/** Whether two paths name one file, as names differing only in case do on a disk that ignores case. */
+async function sameFile(one: string, other: string): Promise<boolean> {
+  const [first, second] = await Promise.all(
+    [one, other].map((file) => fs.stat(file, { bigint: true }).catch(() => undefined)),
+  );
+  return !!first && !!second && first.dev === second.dev && first.ino === second.ino;
+}
 export async function syncCollectionFiles(
   root: string,
   previous: CollectionFiles,
@@ -337,14 +344,17 @@ export async function syncCollectionFiles(
     if (previous.get(file) !== content && !skip.has(file))
       await writeAtomically(path.join(root, file), content, shared);
   // On disks that ignore case, "Users.yaml" and "users.yaml" are one file: a rename that only
-  // changes case has just been written, so removing the old name would delete it.
-  const kept = new Set([...next.keys()].map((file) => file.toLowerCase()));
+  // changes case has just been written, so removing the old name would delete it. On disks that
+  // respect case they are two files, and the old one has to go.
+  const kept = new Map([...next.keys()].map((file) => [file.toLowerCase(), file]));
   const emptied = new Set<string>();
-  for (const file of previous.keys())
-    if (!kept.has(file.toLowerCase()) && !skip.has(file)) {
-      await fs.rm(path.join(root, file), { force: true });
-      emptied.add(path.posix.dirname(file));
-    }
+  for (const file of previous.keys()) {
+    if (next.has(file) || skip.has(file)) continue;
+    const renamed = kept.get(file.toLowerCase());
+    if (renamed && (await sameFile(path.join(root, file), path.join(root, renamed)))) continue;
+    await fs.rm(path.join(root, file), { force: true });
+    emptied.add(path.posix.dirname(file));
+  }
   // Remove directories left empty, deepest first, up to the collections directory.
   const candidates = [...emptied].flatMap((directory) => {
     const chain: string[] = [];
