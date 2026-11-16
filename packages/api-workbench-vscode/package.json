@@ -1501,7 +1501,7 @@
   "devDependencies": {
     "@techieutils/api-workbench-common": "1.0.0",
     "@techieutils/api-workbench-electron": "1.0.0",
-    "@types/vscode": "1.145.0",
-    "@vscode/vsce": "4.1.0"
+    "@types/vscode": "1.146.0",
+    "@vscode/vsce": "4.1.1"
   }
 }

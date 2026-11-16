@@ -86,7 +86,7 @@
     "@techieutils/api-workbench-assets": "1.0.0",
     "@types/html-minifier-terser": "^7.0.2",
     "@types/node": "^26.6.6",
-    "electron": "^45.2.3",
+    "electron": "^45.3.2",
     "electron-builder": "^26.18.1",
     "esbuild": "^0.28.2",
     "eslint": "^10.14.0",
@@ -94,11 +94,11 @@
     "globals": "^17.14.0",
     "html-minifier-terser": "^7.2.0",
     "marked": "18.2.0",
-    "prettier": "^3.9.10",
+    "prettier": "^3.10.1",
     "typescript": "~6.0.3",
     "typescript-build": "npm:typescript@^7.0.2",
     "typescript-eslint": "^8.72.2",
-    "vite": "^8.3.7"
+    "vite": "^8.3.8"
   },
   "overrides": {
     "form-data": "4.0.6"
